@@ -50,7 +50,7 @@ export function ReelDishCard({ dish, active }: { dish: Dish; active: boolean }) 
           </div>
           <h1 className="dish-title text-[2rem] font-bold leading-none tracking-normal">{dish.name}</h1>
           <p className="mt-2 text-lg font-bold text-white">{formatCurrency(dish.price)}</p>
-          <p className="mt-2 line-clamp-2 text-sm leading-5 text-white/85">{dish.shortDescription}</p>
+          <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-white/90">{dish.shortDescription}</p>
           <div className="mt-3 flex items-center gap-2 text-xs text-white/75">
             <span className="rounded-full bg-black/25 px-3 py-1 backdrop-blur">{dish.category}</span>
             <span
@@ -63,7 +63,7 @@ export function ReelDishCard({ dish, active }: { dish: Dish; active: boolean }) 
           </div>
           <div className="mt-4 flex items-stretch gap-2">
             <button
-              className="flex h-12 min-w-0 flex-[0.95] items-center justify-center gap-1 rounded-2xl border border-white/15 bg-black/30 px-2 text-xs font-semibold text-white backdrop-blur transition hover:border-accent/50"
+              className="flex h-12 min-w-0 flex-[0.95] items-center justify-center gap-1 rounded-2xl border border-white/15 bg-black/30 px-2 text-xs font-bold text-white backdrop-blur transition hover:border-accent/50"
               onClick={() => setDescriptionOpen(true)}
               type="button"
             >

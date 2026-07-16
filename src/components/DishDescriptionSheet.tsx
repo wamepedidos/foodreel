@@ -49,7 +49,7 @@ export function DishDescriptionSheet({ dish, open, onClose }: { dish: Dish; open
             <p className="shrink-0 text-lg font-black text-accent">{formatCurrency(dish.price)}</p>
           </div>
 
-          <p className="mt-4 text-sm leading-6 text-white/80">{dish.description}</p>
+          <p className="mt-4 text-base font-semibold leading-7 text-white/90">{dish.description}</p>
 
           <h3 className="mt-5 text-sm font-bold text-white">Ingredientes</h3>
           <div className="mt-3 flex flex-wrap gap-2">
