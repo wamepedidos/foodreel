@@ -58,13 +58,13 @@ export const dishes: Dish[] = [
     id: 'bbq-ribs',
     name: 'Costillas BBQ',
     category: 'Parrilla',
-    shortDescription: 'Costillas cocidas lentamente con salsa BBQ brillante y papas rusticas.',
+    shortDescription: 'Costillas cocidas lentamente con salsa BBQ brillante y papas rústicas.',
     description:
       'Costillas de cerdo marinadas por horas, cocidas a baja temperatura y terminadas con salsa BBQ de la casa. Se sirven con papas rústicas y ensalada fresca.',
     price: 34900,
     image:
       'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=85',
-    ingredients: ['Costillas de cerdo', 'Salsa BBQ', 'Papas rusticas', 'Ensalada fresca'],
+    ingredients: ['Costillas de cerdo', 'Salsa BBQ', 'Papas rústicas', 'Ensalada fresca'],
     available: true,
     tag: 'Promoción',
     likesCount: 201,
@@ -90,6 +90,23 @@ export const dishes: Dish[] = [
     commentsCount: 33
   },
   {
+    id: 'papas-bravas',
+    name: 'Papas Bravas',
+    category: 'Entradas',
+    shortDescription: 'Papas doradas con alioli suave, salsa brava y cebollín fresco.',
+    description:
+      'Papas crocantes por fuera y suaves por dentro, bañadas con salsa brava ligeramente picante, alioli cremoso y cebollín. Perfectas para compartir.',
+    price: 9900,
+    image:
+      'https://images.unsplash.com/photo-1639024471283-03518883512d?auto=format&fit=crop&w=1200&q=85',
+    ingredients: ['Papa criolla', 'Salsa brava', 'Alioli', 'Cebollín', 'Paprika ahumada'],
+    available: true,
+    tag: 'Recomendado',
+    likesCount: 152,
+    viewsCount: 740,
+    commentsCount: 18
+  },
+  {
     id: 'street-food-bites',
     name: 'Bocados Callejeros',
     category: 'Street food',
@@ -108,23 +125,6 @@ export const dishes: Dish[] = [
     commentsCount: 16
   },
   {
-    id: 'papas-bravas',
-    name: 'Papas Bravas',
-    category: 'Entradas',
-    shortDescription: 'Papas doradas con alioli suave, salsa brava y cebollín fresco.',
-    description:
-      'Papas crocantes por fuera y suaves por dentro, bañadas con salsa brava ligeramente picante, alioli cremoso y cebollín. Perfectas para compartir.',
-    price: 9900,
-    image:
-      'https://images.unsplash.com/photo-1639024471283-03518883512d?auto=format&fit=crop&w=1200&q=85',
-    ingredients: ['Papa criolla', 'Salsa brava', 'Alioli', 'Cebollín', 'Paprika ahumada'],
-    available: true,
-    tag: 'Recomendado',
-    likesCount: 152,
-    viewsCount: 740,
-    commentsCount: 18
-  },
-  {
     id: 'berry-cheesecake',
     name: 'Cheesecake de frutos rojos',
     category: 'Postres',
@@ -140,5 +140,59 @@ export const dishes: Dish[] = [
     likesCount: 156,
     viewsCount: 780,
     commentsCount: 19
+  },
+  {
+    id: 'crispy-chicken-bites',
+    name: 'Bites de Pollo Crujiente',
+    category: 'Entradas',
+    shortDescription: 'Pollo crocante con salsa cremosa, limón fresco y especias de la casa.',
+    description:
+      'Bocados de pollo marinados, rebozados y dorados al momento. Llegan con salsa cremosa especiada, limón fresco y un toque de hierbas para compartir al centro de la mesa.',
+    price: 23900,
+    image:
+      'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=1200&q=85',
+    video: '/media/rahanumanaim4_pindown.io_1784235460.mp4',
+    ingredients: ['Pollo marinado', 'Rebozado crocante', 'Salsa cremosa', 'Limón', 'Hierbas frescas'],
+    available: true,
+    tag: 'Nuevo',
+    likesCount: 143,
+    viewsCount: 690,
+    commentsCount: 14
+  },
+  {
+    id: 'loaded-fries',
+    name: 'Papas Loaded',
+    category: 'Entradas',
+    shortDescription: 'Papas doradas con queso fundido, salsa de la casa y topping crocante.',
+    description:
+      'Papas doradas y calientes cubiertas con queso fundido, salsa cremosa de la casa, cebollín y topping crocante. Una entrada abundante para picar sin ceremonia.',
+    price: 18900,
+    image:
+      'https://images.unsplash.com/photo-1576107232684-1279f390859f?auto=format&fit=crop&w=1200&q=85',
+    video: '/media/Jakefooddrinks_pindown.io_1784235658.mp4',
+    ingredients: ['Papas doradas', 'Queso fundido', 'Salsa de la casa', 'Cebollín', 'Topping crocante'],
+    available: true,
+    tag: 'Promoción',
+    likesCount: 167,
+    viewsCount: 820,
+    commentsCount: 20
+  },
+  {
+    id: 'creamy-house-special',
+    name: 'Especial Cremoso de la Casa',
+    category: 'Especiales',
+    shortDescription: 'Preparación cremosa, dorada y llena de sabor para antojos fuertes.',
+    description:
+      'Un especial caliente de textura cremosa, bordes dorados y sabor profundo. Combina una base suave con topping crocante y especias de la casa para un plato reconfortante.',
+    price: 28900,
+    image:
+      'https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=1200&q=85',
+    video: '/media/Rezeptfood147_pindown.io_1784235768.mp4',
+    ingredients: ['Base cremosa', 'Queso gratinado', 'Especias de la casa', 'Topping crocante', 'Hierbas frescas'],
+    available: true,
+    tag: 'Recomendado',
+    likesCount: 192,
+    viewsCount: 930,
+    commentsCount: 22
   }
 ];
