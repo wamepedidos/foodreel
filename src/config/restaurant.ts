@@ -3,6 +3,7 @@ import type { RestaurantConfig } from '../types';
 export const restaurantConfig: RestaurantConfig = {
   brandName: 'FoodReel',
   restaurantName: 'La Esquina Burger',
+  logoSrc: '/brand/foodreel-logo.png',
   logoText: 'F',
   tableNumber: 7,
   colors: {

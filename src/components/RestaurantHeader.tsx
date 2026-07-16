@@ -9,8 +9,16 @@ export function RestaurantHeader({ restaurant }: { restaurant: RestaurantConfig 
   return (
     <header className="relative z-40 flex items-center justify-between border-b border-white/10 bg-base/95 px-4 pb-3 pt-[calc(14px+env(safe-area-inset-top))] backdrop-blur">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent text-lg font-black text-white shadow-glow">
-          {restaurant.logoText || <Utensils className="size-6" />}
+        <div
+          className={`grid size-11 shrink-0 place-items-center rounded-2xl shadow-glow ${
+            restaurant.logoSrc ? 'bg-white p-1' : 'bg-accent text-lg font-black text-white'
+          }`}
+        >
+          {restaurant.logoSrc ? (
+            <img alt={`${restaurant.brandName} logo`} className="size-full object-contain" src={restaurant.logoSrc} />
+          ) : (
+            restaurant.logoText || <Utensils className="size-6" />
+          )}
         </div>
         <div className="min-w-0">
           <p className="truncate text-lg font-extrabold leading-tight">{restaurant.brandName}</p>

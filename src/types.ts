@@ -20,6 +20,7 @@ export type Dish = {
 export type RestaurantConfig = {
   brandName: string;
   restaurantName: string;
+  logoSrc?: string;
   logoText: string;
   tableNumber: number;
   colors: {

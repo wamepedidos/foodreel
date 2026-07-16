@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['offline.html', 'icons/icon.svg', 'icons/maskable-icon.svg'],
+      includeAssets: ['offline.html', 'brand/foodreel-logo.png', 'icons/foodreel-192.png', 'icons/foodreel-512.png'],
       manifest: {
         name: 'FoodReel - Carta digital social',
         short_name: 'FoodReel',
@@ -22,15 +22,15 @@ export default defineConfig({
         scope: '/',
         icons: [
           {
-            src: '/icons/icon.svg',
+            src: '/icons/foodreel-192.png',
             sizes: '192x192',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/icons/maskable-icon.svg',
+            src: '/icons/foodreel-512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'maskable'
           }
         ]
