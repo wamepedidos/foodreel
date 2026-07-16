@@ -46,6 +46,10 @@ input {
   overflow: hidden;
 }
 
+.dish-title {
+  font-family: Georgia, Cambria, "Times New Roman", serif;
+}
+
 @keyframes like-burst {
   0% {
     opacity: 0;

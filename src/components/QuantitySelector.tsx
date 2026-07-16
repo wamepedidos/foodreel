@@ -7,8 +7,8 @@ export function QuantitySelector({ dishId, quantity, price }: { dishId: string; 
   const decrement = useCartStore((state) => state.decrement);
 
   return (
-    <div className="flex h-12 items-center justify-between rounded-2xl bg-accent px-3 text-sm font-bold text-white shadow-glow">
-      <div className="flex items-center gap-2">
+    <div className="flex h-12 min-w-0 flex-1 items-center justify-between rounded-2xl bg-accent px-2 text-sm font-bold text-white">
+      <div className="flex items-center gap-1">
         <button
           aria-label="Disminuir cantidad"
           className="grid size-8 place-items-center rounded-full bg-black/20"
@@ -17,7 +17,7 @@ export function QuantitySelector({ dishId, quantity, price }: { dishId: string; 
         >
           <Minus className="size-4" />
         </button>
-        <span className="min-w-5 text-center">{quantity}</span>
+        <span className="min-w-4 text-center">{quantity}</span>
         <button
           aria-label="Aumentar cantidad"
           className="grid size-8 place-items-center rounded-full bg-black/20"
@@ -27,7 +27,7 @@ export function QuantitySelector({ dishId, quantity, price }: { dishId: string; 
           <Plus className="size-4" />
         </button>
       </div>
-      <span>{formatCurrency(price * quantity)}</span>
+      <span className="truncate pl-1 text-xs">{formatCurrency(price * quantity)}</span>
     </div>
   );
 }

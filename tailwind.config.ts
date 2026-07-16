@@ -15,7 +15,8 @@ export default {
         glow: '0 18px 50px rgba(255, 101, 0, 0.24)'
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Georgia', 'Cambria', 'Times New Roman', 'serif']
       }
     }
   },
