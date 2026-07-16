@@ -16,18 +16,29 @@ export function CommentsSheet({ dish, open, onClose }: { dish: Dish; open: boole
   }
 
   return (
-    <div className="fixed inset-0 z-[70] grid place-items-end bg-black/60 px-3 pb-3 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="w-full max-w-[420px] rounded-[24px] border border-white/10 bg-card p-4 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between">
+    <div
+      aria-label={`Comentarios de ${dish.name}`}
+      aria-modal="true"
+      className="fixed inset-0 z-[80] flex justify-center bg-black/80 backdrop-blur-sm md:items-center"
+      role="dialog"
+    >
+      <div className="flex h-dvh w-full max-w-[520px] flex-col overflow-hidden bg-card shadow-2xl md:h-[calc(100dvh-32px)] md:rounded-[28px] md:border md:border-white/10">
+        <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-5 pb-4 pt-[calc(18px+env(safe-area-inset-top))]">
           <div>
             <h2 className="text-lg font-bold">Comentarios</h2>
             <p className="text-sm text-muted">{dish.name}</p>
           </div>
-          <button aria-label="Cerrar comentarios" className="grid size-9 place-items-center rounded-full bg-white/5 text-muted" onClick={onClose} type="button">
+          <button
+            aria-label="Cerrar comentarios"
+            className="grid size-11 place-items-center rounded-full bg-white/5 text-muted transition hover:bg-white/10 hover:text-white"
+            onClick={onClose}
+            type="button"
+          >
             <X className="size-5" />
           </button>
         </div>
-        <div className="space-y-3">
+
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
           {comments.map((comment) => (
             <div className="rounded-2xl bg-surface p-3" key={`${comment.name}-${comment.time}`}>
               <div className="flex items-center justify-between text-xs">
@@ -38,8 +49,9 @@ export function CommentsSheet({ dish, open, onClose }: { dish: Dish; open: boole
             </div>
           ))}
         </div>
+
         <form
-          className="mt-4 flex items-center gap-2 rounded-2xl border border-white/10 bg-surface p-2"
+          className="m-5 mb-[calc(20px+env(safe-area-inset-bottom))] flex shrink-0 items-center gap-2 rounded-2xl border border-white/10 bg-surface p-2"
           onSubmit={(event) => {
             event.preventDefault();
             showToast('Los comentarios en línea se habilitarán próximamente');
