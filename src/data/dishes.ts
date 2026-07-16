@@ -72,6 +72,42 @@ export const dishes: Dish[] = [
     commentsCount: 29
   },
   {
+    id: 'smoked-bbq-platter',
+    name: 'Tabla BBQ Ahumada',
+    category: 'Parrilla',
+    shortDescription: 'Carnes ahumadas con salsa BBQ, papas doradas y encurtidos frescos.',
+    description:
+      'Una tabla intensa para compartir: cortes de cerdo y res ahumados lentamente, glaseado BBQ de la casa, papas doradas, pepinillos y cebolla encurtida para equilibrar el sabor.',
+    price: 42900,
+    image:
+      'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?auto=format&fit=crop&w=1200&q=85',
+    video: '/media/bbqlads_pindown.io_1784234850.mp4',
+    ingredients: ['Cerdo ahumado', 'Res BBQ', 'Salsa de la casa', 'Papas doradas', 'Pepinillos', 'Cebolla encurtida'],
+    available: true,
+    tag: 'Recomendado',
+    likesCount: 231,
+    viewsCount: 1320,
+    commentsCount: 33
+  },
+  {
+    id: 'street-food-bites',
+    name: 'Bocados Callejeros',
+    category: 'Street food',
+    shortDescription: 'Bocados calientes con salsa cremosa, hierbas frescas y toque picante.',
+    description:
+      'Una mezcla inspirada en comida callejera: bocados crocantes recién servidos, salsa cremosa especiada, hierbas frescas y un final ligeramente picante que invita a seguir probando.',
+    price: 21900,
+    image:
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=85',
+    video: '/media/streetfoodbites_pindown.io_1784235212.mp4',
+    ingredients: ['Bocados crocantes', 'Salsa cremosa', 'Hierbas frescas', 'Ají suave', 'Limón', 'Cebolla crispy'],
+    available: true,
+    tag: 'Nuevo',
+    likesCount: 174,
+    viewsCount: 860,
+    commentsCount: 16
+  },
+  {
     id: 'papas-bravas',
     name: 'Papas Bravas',
     category: 'Entradas',
