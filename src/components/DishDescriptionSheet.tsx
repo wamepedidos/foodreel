@@ -4,6 +4,8 @@ import { formatCurrency } from '../utils/format';
 import { AddToCartButton } from './AddToCartButton';
 
 export function DishDescriptionSheet({ dish, open, onClose }: { dish: Dish; open: boolean; onClose: () => void }) {
+  const poster = dish.image.includes('foodreel-logo') ? undefined : dish.image;
+
   if (!open) {
     return null;
   }
@@ -25,11 +27,15 @@ export function DishDescriptionSheet({ dish, open, onClose }: { dish: Dish; open
               loop
               muted
               playsInline
-              poster={dish.image}
+              poster={poster}
               src={dish.video}
             />
           ) : (
-            <img alt={dish.name} className="h-full w-full object-cover" src={dish.image} />
+            poster ? (
+              <img alt={dish.name} className="h-full w-full object-cover" src={poster} />
+            ) : (
+              <div className="h-full w-full bg-black" />
+            )
           )}
           <button
             aria-label="Cerrar descripción"

@@ -6,9 +6,6 @@
   color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   background: #0b0b0c;
-  --app-header-height: calc(72px + env(safe-area-inset-top));
-  --bottom-nav-height: calc(92px + env(safe-area-inset-bottom));
-  --reel-viewport-height: calc(100% - var(--bottom-nav-height));
 }
 
 * {
@@ -42,25 +39,6 @@ input {
 
 .reel-scroll::-webkit-scrollbar {
   display: none;
-}
-
-.reel-viewport {
-  height: var(--reel-viewport-height);
-  min-height: var(--reel-viewport-height);
-  max-height: var(--reel-viewport-height);
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  scroll-behavior: smooth;
-  scroll-snap-type: y mandatory;
-}
-
-.reel-card {
-  height: 100%;
-  min-height: 100%;
-  max-height: 100%;
-  flex: 0 0 100%;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
 .no-scrollbar {

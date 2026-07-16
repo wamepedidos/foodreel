@@ -6,6 +6,7 @@ export function ReelMedia({ dish, active }: { dish: Dish; active: boolean }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [muted, setMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
+  const poster = dish.image.includes('foodreel-logo') ? undefined : dish.image;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -31,13 +32,17 @@ export function ReelMedia({ dish, active }: { dish: Dish; active: boolean }) {
           muted={muted}
           onError={() => setVideoFailed(true)}
           playsInline
-          poster={dish.image}
+          poster={poster}
           preload="metadata"
           ref={videoRef}
           src={dish.video}
         />
       ) : (
-        <img alt={dish.name} className="h-full w-full object-cover" src={dish.image} />
+        poster ? (
+          <img alt={dish.name} className="h-full w-full object-cover" src={poster} />
+        ) : (
+          <div className="h-full w-full bg-black" />
+        )
       )}
       <button
         aria-label={muted ? 'Activar sonido' : 'Silenciar video'}

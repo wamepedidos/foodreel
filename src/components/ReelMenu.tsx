@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dish } from '../types';
+import { useMenuStore } from '../store/useMenuStore';
 import { LoadingSkeleton } from './LoadingSkeleton';
 import { ReelDishCard } from './ReelDishCard';
-import { useMenuStore } from '../store/useMenuStore';
 
 export function ReelMenu({ dishes }: { dishes: Dish[] }) {
   const [loading, setLoading] = useState(true);
   const storedActiveDishId = useMenuStore((state) => state.activeDishId);
   const setStoredActiveDishId = useMenuStore((state) => state.setActiveDishId);
-  const restoreDishId = sessionStorage.getItem('foodreel-active-dish-id') ?? storedActiveDishId ?? dishes[0]?.id;
-  const [activeDishId, setActiveDishId] = useState<string | undefined>(restoreDishId);
+  const [activeDishId, setActiveDishId] = useState<string | undefined>(storedActiveDishId ?? dishes[0]?.id);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -33,13 +32,12 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
           setActiveDishId(nextDishId);
           if (nextDishId) {
             setStoredActiveDishId(nextDishId);
-            sessionStorage.setItem('foodreel-active-dish-id', nextDishId);
           }
         }
       },
       {
         root: containerRef.current,
-        threshold: [0.75, 0.85, 0.92]
+        threshold: [0.65, 0.82]
       }
     );
 
@@ -49,31 +47,9 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
     return () => observer.disconnect();
   }, [dishes, loading, setStoredActiveDishId]);
 
-  useEffect(() => {
-    const targetDishId = sessionStorage.getItem('foodreel-active-dish-id') ?? storedActiveDishId;
-
-    if (loading || !targetDishId || !containerRef.current) {
-      return;
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      const container = containerRef.current;
-      const cards = Array.from(container?.querySelectorAll<HTMLElement>('[data-dish-id]') ?? []);
-      const targetIndex = cards.findIndex((card) => card.dataset.dishId === targetDishId);
-
-      if (!container || targetIndex < 0) {
-        return;
-      }
-
-      container.scrollTo({ top: targetIndex * container.clientHeight, behavior: 'auto' });
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [loading, storedActiveDishId]);
-
   if (loading) {
     return (
-      <div className="reel-viewport overflow-hidden">
+      <div className="h-full overflow-hidden pb-[84px]">
         <LoadingSkeleton />
       </div>
     );
@@ -81,7 +57,7 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
 
   return (
     <div
-      className="reel-scroll reel-viewport"
+      className="reel-scroll h-full snap-y snap-mandatory overflow-y-auto overscroll-contain pb-[84px]"
       ref={containerRef}
     >
       {dishes.map((dish) => (

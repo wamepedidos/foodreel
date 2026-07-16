@@ -6,25 +6,8 @@ import { WaiterCallButton } from './WaiterCallButton';
 export function RestaurantHeader({ restaurant }: { restaurant: RestaurantConfig }) {
   const viewMode = useMenuStore((state) => state.viewMode);
   const setViewMode = useMenuStore((state) => state.setViewMode);
-  const setActiveDishId = useMenuStore((state) => state.setActiveDishId);
   const nextMode = viewMode === 'reel' ? 'grid' : 'reel';
   const toggleLabel = viewMode === 'reel' ? 'Abrir vista mosaico' : 'Volver a vista Reel';
-
-  const handleToggleView = () => {
-    if (viewMode === 'reel') {
-      const reel = document.querySelector<HTMLElement>('.reel-viewport');
-      const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-dish-id]'));
-      const activeIndex = reel ? Math.round(reel.scrollTop / Math.max(reel.clientHeight, 1)) : 0;
-      const activeDishId = cards[activeIndex]?.dataset.dishId;
-
-      if (activeDishId) {
-        setActiveDishId(activeDishId);
-        sessionStorage.setItem('foodreel-active-dish-id', activeDishId);
-      }
-    }
-
-    setViewMode(nextMode);
-  };
 
   return (
     <header className="relative z-40 flex items-center justify-between border-b border-white/10 bg-base/95 px-4 pb-3 pt-[calc(14px+env(safe-area-inset-top))] backdrop-blur">
@@ -52,7 +35,7 @@ export function RestaurantHeader({ restaurant }: { restaurant: RestaurantConfig 
         <button
           aria-label={toggleLabel}
           className="grid size-10 place-items-center rounded-2xl border border-white/10 bg-surface text-accent transition hover:border-accent/50"
-          onClick={handleToggleView}
+          onClick={() => setViewMode(nextMode)}
           title={toggleLabel}
           type="button"
         >

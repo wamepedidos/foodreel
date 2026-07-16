@@ -13,6 +13,7 @@ export function GridDishCard({ dish, onFocus }: { dish: Dish; onFocus: (dishId: 
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [mediaLoaded, setMediaLoaded] = useState(false);
   const [mediaFailed, setMediaFailed] = useState(false);
+  const poster = dish.image.includes('foodreel-logo') ? undefined : dish.image;
 
   const openDescription = () => {
     onFocus(dish.id);
@@ -37,7 +38,7 @@ export function GridDishCard({ dish, onFocus }: { dish: Dish; onFocus: (dishId: 
               onCanPlay={() => setMediaLoaded(true)}
               onError={() => setMediaFailed(true)}
               playsInline
-              poster={dish.image}
+              poster={poster}
               preload="metadata"
               src={dish.video}
             />
