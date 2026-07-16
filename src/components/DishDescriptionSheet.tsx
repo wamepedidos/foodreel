@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import type { Dish } from '../types';
 import { formatCurrency } from '../utils/format';
+import { AddToCartButton } from './AddToCartButton';
 
 export function DishDescriptionSheet({ dish, open, onClose }: { dish: Dish; open: boolean; onClose: () => void }) {
   if (!open) {
@@ -63,13 +64,16 @@ export function DishDescriptionSheet({ dish, open, onClose }: { dish: Dish; open
             ))}
           </div>
 
-          <button
-            className="mt-6 h-12 w-full rounded-2xl border border-white/10 bg-surface font-semibold text-white transition hover:border-accent/50"
-            onClick={onClose}
-            type="button"
-          >
-            Cerrar
-          </button>
+          <div className="mt-6 flex items-stretch gap-2">
+            <button
+              className="h-12 flex-1 rounded-2xl border border-white/10 bg-surface font-semibold text-white transition hover:border-accent/50"
+              onClick={onClose}
+              type="button"
+            >
+              Cerrar
+            </button>
+            <AddToCartButton dish={dish} />
+          </div>
         </div>
       </div>
     </div>

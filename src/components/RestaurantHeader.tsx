@@ -1,10 +1,29 @@
-import { Grid2X2, Utensils } from 'lucide-react';
+import { Grid2X2, RectangleVertical, Utensils } from 'lucide-react';
 import type { RestaurantConfig } from '../types';
-import { useToast } from './Toast';
+import { useMenuStore } from '../store/useMenuStore';
 import { WaiterCallButton } from './WaiterCallButton';
 
 export function RestaurantHeader({ restaurant }: { restaurant: RestaurantConfig }) {
-  const { showToast } = useToast();
+  const viewMode = useMenuStore((state) => state.viewMode);
+  const setViewMode = useMenuStore((state) => state.setViewMode);
+  const setActiveDishId = useMenuStore((state) => state.setActiveDishId);
+  const nextMode = viewMode === 'reel' ? 'grid' : 'reel';
+  const toggleLabel = viewMode === 'reel' ? 'Abrir vista mosaico' : 'Volver a vista Reel';
+
+  const handleToggleView = () => {
+    if (viewMode === 'reel') {
+      const reel = document.querySelector<HTMLElement>('.reel-viewport');
+      const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-dish-id]'));
+      const activeIndex = reel ? Math.round(reel.scrollTop / Math.max(reel.clientHeight, 1)) : 0;
+      const activeDishId = cards[activeIndex]?.dataset.dishId;
+
+      if (activeDishId) {
+        setActiveDishId(activeDishId);
+      }
+    }
+
+    setViewMode(nextMode);
+  };
 
   return (
     <header className="relative z-40 flex items-center justify-between border-b border-white/10 bg-base/95 px-4 pb-3 pt-[calc(14px+env(safe-area-inset-top))] backdrop-blur">
@@ -30,12 +49,13 @@ export function RestaurantHeader({ restaurant }: { restaurant: RestaurantConfig 
       <div className="flex items-center gap-2">
         <WaiterCallButton />
         <button
-          aria-label="Abrir vista mosaico"
+          aria-label={toggleLabel}
           className="grid size-10 place-items-center rounded-2xl border border-white/10 bg-surface text-accent transition hover:border-accent/50"
-          onClick={() => showToast('Vista mosaico disponible en la próxima etapa')}
+          onClick={handleToggleView}
+          title={toggleLabel}
           type="button"
         >
-          <Grid2X2 className="size-5" />
+          {viewMode === 'reel' ? <Grid2X2 className="size-5" /> : <RectangleVertical className="size-5" />}
         </button>
       </div>
     </header>

@@ -6,6 +6,9 @@
   color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   background: #0b0b0c;
+  --app-header-height: calc(72px + env(safe-area-inset-top));
+  --bottom-nav-height: calc(92px + env(safe-area-inset-bottom));
+  --reel-viewport-height: calc(100% - var(--bottom-nav-height));
 }
 
 * {
@@ -16,10 +19,12 @@ html,
 body,
 #root {
   min-height: 100%;
+  width: 100%;
 }
 
 body {
   margin: 0;
+  min-width: 320px;
   background:
     radial-gradient(circle at 18% 0%, rgba(255, 101, 0, 0.12), transparent 32rem),
     radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.05), transparent 28rem),
@@ -36,6 +41,33 @@ input {
 }
 
 .reel-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.reel-viewport {
+  height: var(--reel-viewport-height);
+  min-height: var(--reel-viewport-height);
+  max-height: var(--reel-viewport-height);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+}
+
+.reel-card {
+  height: 100%;
+  min-height: 100%;
+  max-height: 100%;
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
@@ -74,5 +106,6 @@ input {
     min-height: 100dvh;
     display: grid;
     place-items: center;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

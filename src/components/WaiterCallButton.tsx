@@ -8,6 +8,7 @@ export function WaiterCallButton() {
   return (
     <>
       <button
+        aria-label="Llamar mesero"
         className="inline-flex h-10 items-center gap-2 rounded-2xl bg-accent px-3 text-xs font-bold text-white shadow-glow transition hover:brightness-110"
         onClick={() => setOpen(true)}
         type="button"

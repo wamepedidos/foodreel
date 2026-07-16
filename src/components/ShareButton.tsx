@@ -3,12 +3,17 @@ import type { Dish } from '../types';
 import { formatCurrency } from '../utils/format';
 import { useToast } from './Toast';
 
-export function ShareButton({ dish }: { dish: Dish }) {
+export function ShareButton({ compact = false, dish }: { compact?: boolean; dish: Dish }) {
   const { showToast } = useToast();
 
   return (
     <button
-      className="grid place-items-center gap-1 text-white"
+      aria-label={`Compartir ${dish.name}`}
+      className={
+        compact
+          ? 'inline-flex h-8 items-center gap-1 rounded-full bg-black/20 px-2 text-white/70 transition hover:text-white'
+          : 'grid place-items-center gap-1 text-white'
+      }
       onClick={async () => {
         const url = window.location.href;
         const shareData = {
@@ -31,10 +36,16 @@ export function ShareButton({ dish }: { dish: Dish }) {
       }}
       type="button"
     >
-      <span className="grid size-11 place-items-center rounded-full bg-black/45 backdrop-blur">
-        <Send className="size-6" />
-      </span>
-      <span className="text-[11px] font-bold">Enviar</span>
+      {compact ? (
+        <Send className="size-3.5" />
+      ) : (
+        <>
+          <span className="grid size-11 place-items-center rounded-full bg-black/45 backdrop-blur">
+            <Send className="size-6" />
+          </span>
+          <span className="text-[11px] font-bold">Enviar</span>
+        </>
+      )}
     </button>
   );
 }

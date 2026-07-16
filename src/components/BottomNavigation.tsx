@@ -1,5 +1,6 @@
 import { Heart, Home, Menu as MenuIcon, ShoppingBag, UserRound, UsersRound } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
+import { useMenuStore } from '../store/useMenuStore';
 import { useToast } from './Toast';
 
 const navItems = [
@@ -12,10 +13,15 @@ const navItems = [
 
 export function BottomNavigation() {
   const totalQuantity = useCartStore((state) => state.totalQuantity());
+  const viewMode = useMenuStore((state) => state.viewMode);
   const { showToast } = useToast();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-[520px] border-t border-white/10 bg-base/95 px-3 pb-[calc(8px+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:absolute md:rounded-b-[28px]">
+    <nav
+      className={`fixed inset-x-0 bottom-0 z-50 mx-auto border-t border-white/10 bg-base/95 px-3 pb-[calc(8px+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:absolute md:rounded-b-[28px] ${
+        viewMode === 'grid' ? 'max-w-[1180px]' : 'max-w-[520px]'
+      }`}
+    >
       <div className="grid grid-cols-5 items-end gap-1">
         {navItems.map((item) => {
           const Icon = item.icon;

@@ -1,88 +1,19 @@
 import type { Dish } from '../types';
 
+const videoPoster = '/brand/foodreel-logo.png';
+
 export const dishes: Dish[] = [
   {
-    id: 'classic-burger',
-    name: 'Hamburguesa Clásica',
-    category: 'Hamburguesas',
-    shortDescription: 'Carne jugosa, cheddar fundido, vegetales frescos y salsa de la casa.',
-    description:
-      'Una hamburguesa generosa con carne de res sellada a la plancha, queso cheddar, lechuga crocante, tomate maduro, cebolla morada y nuestra salsa ahumada en pan brioche tostado.',
-    price: 29900,
-    image:
-      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1200&q=85',
-    video: 'https://cdn.coverr.co/videos/coverr-making-a-cheeseburger-8744/1080p.mp4',
-    ingredients: ['Carne 150g', 'Queso cheddar', 'Lechuga', 'Tomate', 'Cebolla morada', 'Pan brioche'],
-    available: true,
-    tag: 'Más pedido',
-    likesCount: 248,
-    viewsCount: 1200,
-    commentsCount: 37
-  },
-  {
-    id: 'special-burger',
-    name: 'Hamburguesa Especial',
-    category: 'Hamburguesas',
-    shortDescription: 'Doble carne, tocineta crujiente, queso americano y cebolla caramelizada.',
-    description:
-      'Nuestra opción más intensa: doble carne, tocineta dorada, queso americano, cebolla caramelizada lentamente, pepinillos y mayonesa de ajo rostizado.',
-    price: 36900,
-    image:
-      'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1200&q=85',
-    ingredients: ['Doble carne', 'Tocineta', 'Queso americano', 'Pepinillos', 'Cebolla caramelizada'],
-    available: true,
-    tag: 'Recomendado',
-    likesCount: 185,
-    viewsCount: 980,
-    commentsCount: 24
-  },
-  {
-    id: 'alfredo-pasta',
-    name: 'Pasta Alfredo',
-    category: 'Pastas',
-    shortDescription: 'Fettuccine cremoso con parmesano, pollo grillado y pimienta recién molida.',
-    description:
-      'Fettuccine al dente cubierto con salsa Alfredo sedosa, parmesano, mantequilla, crema, pollo grillado y un toque de pimienta negra para equilibrar la intensidad.',
-    price: 26900,
-    image:
-      'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?auto=format&fit=crop&w=1200&q=85',
-    video: 'https://cdn.coverr.co/videos/coverr-twirling-pasta-3933/1080p.mp4',
-    ingredients: ['Fettuccine', 'Pollo grillado', 'Parmesano', 'Crema', 'Mantequilla', 'Pimienta negra'],
-    available: true,
-    tag: 'Nuevo',
-    likesCount: 196,
-    viewsCount: 890,
-    commentsCount: 21
-  },
-  {
-    id: 'bbq-ribs',
-    name: 'Costillas BBQ',
-    category: 'Parrilla',
-    shortDescription: 'Costillas cocidas lentamente con salsa BBQ brillante y papas rústicas.',
-    description:
-      'Costillas de cerdo marinadas por horas, cocidas a baja temperatura y terminadas con salsa BBQ de la casa. Se sirven con papas rústicas y ensalada fresca.',
-    price: 34900,
-    image:
-      'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=85',
-    ingredients: ['Costillas de cerdo', 'Salsa BBQ', 'Papas rústicas', 'Ensalada fresca'],
-    available: true,
-    tag: 'Promoción',
-    likesCount: 201,
-    viewsCount: 1100,
-    commentsCount: 29
-  },
-  {
-    id: 'smoked-bbq-platter',
+    id: 'bbq-smoked-board',
     name: 'Tabla BBQ Ahumada',
     category: 'Parrilla',
-    shortDescription: 'Carnes ahumadas con salsa BBQ, papas doradas y encurtidos frescos.',
+    shortDescription: 'Carnes ahumadas, salsa BBQ brillante y acompanantes calientes.',
     description:
-      'Una tabla intensa para compartir: cortes de cerdo y res ahumados lentamente, glaseado BBQ de la casa, papas doradas, pepinillos y cebolla encurtida para equilibrar el sabor.',
+      'Una tabla intensa para compartir con carnes ahumadas lentamente, salsa BBQ de la casa, papas doradas y un contraste fresco para equilibrar cada bocado.',
     price: 42900,
-    image:
-      'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?auto=format&fit=crop&w=1200&q=85',
+    image: videoPoster,
     video: '/media/bbqlads_pindown.io_1784234850.mp4',
-    ingredients: ['Cerdo ahumado', 'Res BBQ', 'Salsa de la casa', 'Papas doradas', 'Pepinillos', 'Cebolla encurtida'],
+    ingredients: ['Carnes ahumadas', 'Salsa BBQ', 'Papas doradas', 'Encurtidos', 'Especias de la casa'],
     available: true,
     tag: 'Recomendado',
     likesCount: 231,
@@ -90,34 +21,16 @@ export const dishes: Dish[] = [
     commentsCount: 33
   },
   {
-    id: 'papas-bravas',
-    name: 'Papas Bravas',
-    category: 'Entradas',
-    shortDescription: 'Papas doradas con alioli suave, salsa brava y cebollín fresco.',
-    description:
-      'Papas crocantes por fuera y suaves por dentro, bañadas con salsa brava ligeramente picante, alioli cremoso y cebollín. Perfectas para compartir.',
-    price: 9900,
-    image:
-      'https://images.unsplash.com/photo-1639024471283-03518883512d?auto=format&fit=crop&w=1200&q=85',
-    ingredients: ['Papa criolla', 'Salsa brava', 'Alioli', 'Cebollín', 'Paprika ahumada'],
-    available: true,
-    tag: 'Recomendado',
-    likesCount: 152,
-    viewsCount: 740,
-    commentsCount: 18
-  },
-  {
     id: 'street-food-bites',
     name: 'Bocados Callejeros',
     category: 'Street food',
-    shortDescription: 'Bocados calientes con salsa cremosa, hierbas frescas y toque picante.',
+    shortDescription: 'Bocados calientes con salsa cremosa, hierbas y toque picante.',
     description:
-      'Una mezcla inspirada en comida callejera: bocados crocantes recién servidos, salsa cremosa especiada, hierbas frescas y un final ligeramente picante que invita a seguir probando.',
+      'Inspirado en antojos de calle: bocados crocantes recien servidos, salsa especiada, hierbas frescas y un final ligeramente picante.',
     price: 21900,
-    image:
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=85',
+    image: videoPoster,
     video: '/media/streetfoodbites_pindown.io_1784235212.mp4',
-    ingredients: ['Bocados crocantes', 'Salsa cremosa', 'Hierbas frescas', 'Ají suave', 'Limón', 'Cebolla crispy'],
+    ingredients: ['Bocados crocantes', 'Salsa cremosa', 'Hierbas frescas', 'Aji suave', 'Limon'],
     available: true,
     tag: 'Nuevo',
     likesCount: 174,
@@ -125,34 +38,16 @@ export const dishes: Dish[] = [
     commentsCount: 16
   },
   {
-    id: 'berry-cheesecake',
-    name: 'Cheesecake de frutos rojos',
-    category: 'Postres',
-    shortDescription: 'Cheesecake cremoso con coulis de frutos rojos y base crocante.',
-    description:
-      'Postre frío de textura aterciopelada, base de galleta dorada y coulis artesanal de mora, fresa y frambuesa. Dulce, fresco y equilibrado.',
-    price: 14900,
-    image:
-      'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=1200&q=85',
-    ingredients: ['Queso crema', 'Galleta', 'Mora', 'Fresa', 'Frambuesa', 'Vainilla'],
-    available: true,
-    tag: 'Nuevo',
-    likesCount: 156,
-    viewsCount: 780,
-    commentsCount: 19
-  },
-  {
     id: 'crispy-chicken-bites',
     name: 'Bites de Pollo Crujiente',
     category: 'Entradas',
-    shortDescription: 'Pollo crocante con salsa cremosa, limón fresco y especias de la casa.',
+    shortDescription: 'Pollo crocante con salsa cremosa, limon y especias.',
     description:
-      'Bocados de pollo marinados, rebozados y dorados al momento. Llegan con salsa cremosa especiada, limón fresco y un toque de hierbas para compartir al centro de la mesa.',
+      'Bocados de pollo marinados, rebozados y dorados al momento. Llegan con salsa cremosa especiada, limon fresco y hierbas para compartir.',
     price: 23900,
-    image:
-      'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=1200&q=85',
+    image: videoPoster,
     video: '/media/rahanumanaim4_pindown.io_1784235460.mp4',
-    ingredients: ['Pollo marinado', 'Rebozado crocante', 'Salsa cremosa', 'Limón', 'Hierbas frescas'],
+    ingredients: ['Pollo marinado', 'Rebozado crocante', 'Salsa cremosa', 'Limon', 'Hierbas frescas'],
     available: true,
     tag: 'Nuevo',
     likesCount: 143,
@@ -163,36 +58,221 @@ export const dishes: Dish[] = [
     id: 'loaded-fries',
     name: 'Papas Loaded',
     category: 'Entradas',
-    shortDescription: 'Papas doradas con queso fundido, salsa de la casa y topping crocante.',
+    shortDescription: 'Papas doradas con queso fundido, salsa y topping crocante.',
     description:
-      'Papas doradas y calientes cubiertas con queso fundido, salsa cremosa de la casa, cebollín y topping crocante. Una entrada abundante para picar sin ceremonia.',
+      'Papas calientes y doradas cubiertas con queso fundido, salsa cremosa de la casa, cebollin y topping crocante.',
     price: 18900,
-    image:
-      'https://images.unsplash.com/photo-1576107232684-1279f390859f?auto=format&fit=crop&w=1200&q=85',
+    image: videoPoster,
     video: '/media/Jakefooddrinks_pindown.io_1784235658.mp4',
-    ingredients: ['Papas doradas', 'Queso fundido', 'Salsa de la casa', 'Cebollín', 'Topping crocante'],
+    ingredients: ['Papas doradas', 'Queso fundido', 'Salsa de la casa', 'Cebollin', 'Topping crocante'],
     available: true,
-    tag: 'Promoción',
+    tag: 'Recomendado',
     likesCount: 167,
     viewsCount: 820,
     commentsCount: 20
   },
   {
     id: 'creamy-house-special',
-    name: 'Especial Cremoso de la Casa',
+    name: 'Especial Cremoso',
     category: 'Especiales',
-    shortDescription: 'Preparación cremosa, dorada y llena de sabor para antojos fuertes.',
+    shortDescription: 'Preparacion cremosa, dorada y llena de sabor.',
     description:
-      'Un especial caliente de textura cremosa, bordes dorados y sabor profundo. Combina una base suave con topping crocante y especias de la casa para un plato reconfortante.',
+      'Un especial caliente de textura cremosa, bordes dorados y sabor profundo. Combina una base suave con topping crocante y especias de la casa.',
     price: 28900,
-    image:
-      'https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=1200&q=85',
+    image: videoPoster,
     video: '/media/Rezeptfood147_pindown.io_1784235768.mp4',
-    ingredients: ['Base cremosa', 'Queso gratinado', 'Especias de la casa', 'Topping crocante', 'Hierbas frescas'],
+    ingredients: ['Base cremosa', 'Queso gratinado', 'Especias', 'Topping crocante', 'Hierbas frescas'],
     available: true,
     tag: 'Recomendado',
     likesCount: 192,
     viewsCount: 930,
     commentsCount: 22
+  },
+  {
+    id: 'applebees-glazed-ribs',
+    name: 'Costillas Glaseadas',
+    category: 'Parrilla',
+    shortDescription: 'Costillas jugosas con glaseado dulce, ahumado y brillante.',
+    description:
+      'Costillas cocidas lentamente hasta quedar suaves, terminadas con glaseado BBQ dulce y ahumado. Un plato potente para quienes buscan sabor de parrilla.',
+    price: 38900,
+    image: videoPoster,
+    video: '/media/applebees_pindown.io_1784238569.mp4',
+    ingredients: ['Costillas', 'Glaseado BBQ', 'Especias ahumadas', 'Papas', 'Ensalada fresca'],
+    available: true,
+    tag: 'Recomendado',
+    likesCount: 214,
+    viewsCount: 1180,
+    commentsCount: 27
+  },
+  {
+    id: 'aroma-pizza',
+    name: 'Pizza Artesanal Aroma',
+    category: 'Pizzas',
+    shortDescription: 'Masa dorada, queso fundido y toppings de la casa.',
+    description:
+      'Pizza de masa artesanal con borde dorado, salsa de tomate especiada, queso fundido y toppings preparados para servirse caliente.',
+    price: 32900,
+    image: videoPoster,
+    video: '/media/aromatapizzaria_pindown.io_1784239416.mp4',
+    ingredients: ['Masa artesanal', 'Salsa de tomate', 'Queso mozzarella', 'Oregano', 'Toppings de la casa'],
+    available: true,
+    tag: 'Nuevo',
+    likesCount: 188,
+    viewsCount: 910,
+    commentsCount: 19
+  },
+  {
+    id: 'brittney-recipe-bowl',
+    name: 'Bowl Cremoso Casero',
+    category: 'Especiales',
+    shortDescription: 'Bowl caliente con salsa cremosa y textura reconfortante.',
+    description:
+      'Un bowl de sabor casero con base caliente, salsa cremosa, toque especiado y acabado fresco. Ideal para una comida rapida y completa.',
+    price: 25900,
+    image: videoPoster,
+    video: '/media/brittneyrecipe_pindown.io_1784239293.mp4',
+    ingredients: ['Base caliente', 'Salsa cremosa', 'Proteina de la casa', 'Hierbas', 'Especias'],
+    available: true,
+    tag: 'Nuevo',
+    likesCount: 136,
+    viewsCount: 720,
+    commentsCount: 13
+  },
+  {
+    id: 'cooking-trends-tacos',
+    name: 'Tacos Crocantes',
+    category: 'Tacos',
+    shortDescription: 'Tacos con relleno jugoso, salsa y contraste crocante.',
+    description:
+      'Tacos servidos al momento con relleno jugoso, salsa de la casa, vegetales frescos y un punto crocante que los hace adictivos.',
+    price: 24900,
+    image: videoPoster,
+    video: '/media/cookingtrends25_pindown.io_1784238302.mp4',
+    ingredients: ['Tortillas', 'Proteina sazonada', 'Salsa de la casa', 'Vegetales frescos', 'Crocante'],
+    available: true,
+    tag: 'Nuevo',
+    likesCount: 151,
+    viewsCount: 790,
+    commentsCount: 15
+  },
+  {
+    id: 'crackerbarrel-country-chicken',
+    name: 'Pollo Country',
+    category: 'Pollo',
+    shortDescription: 'Pollo estilo casero con acompanantes calientes.',
+    description:
+      'Plato de pollo estilo country con sazon profundo, textura dorada y acompanantes calientes para una experiencia abundante.',
+    price: 30900,
+    image: videoPoster,
+    video: '/media/crackerbarrel_pindown.io_1784239085.mp4',
+    ingredients: ['Pollo sazonado', 'Salsa casera', 'Papas', 'Vegetales', 'Especias'],
+    available: true,
+    tag: 'Recomendado',
+    likesCount: 176,
+    viewsCount: 880,
+    commentsCount: 18
+  },
+  {
+    id: 'creme-pasta',
+    name: 'Pasta Cremosa',
+    category: 'Pastas',
+    shortDescription: 'Pasta banada en salsa cremosa, queso y hierbas.',
+    description:
+      'Pasta caliente con salsa cremosa, queso, hierbas frescas y textura sedosa. Un plato suave, generoso y muy aromatico.',
+    price: 27900,
+    image: videoPoster,
+    video: '/media/cremedelafood_pindown.io_1784239076.mp4',
+    ingredients: ['Pasta', 'Crema', 'Queso', 'Hierbas frescas', 'Pimienta'],
+    available: true,
+    tag: 'Recomendado',
+    likesCount: 205,
+    viewsCount: 1040,
+    commentsCount: 24
+  },
+  {
+    id: 'fellipe-dessert',
+    name: 'Postre Dorado',
+    category: 'Postres',
+    shortDescription: 'Postre dulce con acabado dorado y textura suave.',
+    description:
+      'Una opcion dulce para cerrar la comida: textura suave, acabado dorado y un equilibrio entre cremosidad y toque crocante.',
+    price: 15900,
+    image: videoPoster,
+    video: '/media/fellipe0565_pindown.io_1784239265.mp4',
+    ingredients: ['Base dulce', 'Crema', 'Topping dorado', 'Vainilla', 'Salsa de la casa'],
+    available: true,
+    tag: 'Nuevo',
+    likesCount: 128,
+    viewsCount: 610,
+    commentsCount: 11
+  },
+  {
+    id: 'lola-house-special',
+    name: 'Antojo de la Casa',
+    category: 'Especiales',
+    shortDescription: 'Preparacion abundante con salsa, queso y mucho sabor.',
+    description:
+      'Un antojo de la casa pensado para verse y saberse intenso: salsa generosa, queso, textura caliente y un final especiado.',
+    price: 29900,
+    image: videoPoster,
+    video: '/media/lolacarolafood_pindown.io_1784239184.mp4',
+    ingredients: ['Base de la casa', 'Queso', 'Salsa especiada', 'Topping crocante', 'Hierbas'],
+    available: true,
+    tag: 'Recomendado',
+    likesCount: 219,
+    viewsCount: 1210,
+    commentsCount: 31
+  },
+  {
+    id: 'one-stop-sandwich',
+    name: 'Sandwich Crunch',
+    category: 'Sandwiches',
+    shortDescription: 'Sandwich caliente con relleno jugoso y borde crocante.',
+    description:
+      'Sandwich armado al momento con pan caliente, relleno jugoso, salsa de la casa y un toque crocante para cada mordida.',
+    price: 22900,
+    image: videoPoster,
+    video: '/media/onestop44_pindown.io_1784238412.mp4',
+    ingredients: ['Pan tostado', 'Relleno de la casa', 'Salsa cremosa', 'Vegetales', 'Queso'],
+    available: true,
+    tag: 'Nuevo',
+    likesCount: 149,
+    viewsCount: 760,
+    commentsCount: 14
+  },
+  {
+    id: 'vitos-pastor-tacos',
+    name: 'Tacos Vitos al Pastor',
+    category: 'Tacos',
+    shortDescription: 'Tacos calientes con carne sazonada, salsa y limon.',
+    description:
+      'Tacos estilo Vitos con carne sazonada, tortilla caliente, salsa intensa, cebolla, cilantro y limon fresco.',
+    price: 26900,
+    image: videoPoster,
+    video: '/media/VitosTacos_pindown.io_1784239144.mp4',
+    ingredients: ['Tortillas', 'Carne sazonada', 'Cebolla', 'Cilantro', 'Limon', 'Salsa'],
+    available: true,
+    tag: 'Recomendado',
+    likesCount: 197,
+    viewsCount: 970,
+    commentsCount: 23
+  },
+  {
+    id: 'vitos-quesadillas',
+    name: 'Quesadillas Vitos',
+    category: 'Tacos',
+    shortDescription: 'Quesadillas doradas con queso fundido y salsa fresca.',
+    description:
+      'Quesadillas calientes con tortilla dorada, queso fundido, relleno sazonado y salsa fresca para terminar cada bocado.',
+    price: 25900,
+    image: videoPoster,
+    video: '/media/VitosTacos_pindown.io_1784239258.mp4',
+    ingredients: ['Tortilla dorada', 'Queso fundido', 'Relleno sazonado', 'Salsa fresca', 'Limon'],
+    available: true,
+    tag: 'Nuevo',
+    likesCount: 184,
+    viewsCount: 940,
+    commentsCount: 21
   }
 ];
