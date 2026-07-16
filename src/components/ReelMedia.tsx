@@ -62,8 +62,8 @@ export function ReelMedia({ dish, active, preload = false }: { dish: Dish; activ
       }
     };
 
-    const warmFirstSecond = () => {
-      const targetTime = Number.isFinite(video.duration) && video.duration > 1.2 ? 1 : 0.2;
+    const warmFirstTwoSeconds = () => {
+      const targetTime = Number.isFinite(video.duration) && video.duration > 2.2 ? 2 : 0.5;
 
       try {
         if (video.currentTime < targetTime) {
@@ -78,13 +78,13 @@ export function ReelMedia({ dish, active, preload = false }: { dish: Dish; activ
     };
 
     if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
-      warmFirstSecond();
+      warmFirstTwoSeconds();
       return undefined;
     }
 
-    video.addEventListener('loadedmetadata', warmFirstSecond, { once: true });
+    video.addEventListener('loadedmetadata', warmFirstTwoSeconds, { once: true });
     return () => {
-      video.removeEventListener('loadedmetadata', warmFirstSecond);
+      video.removeEventListener('loadedmetadata', warmFirstTwoSeconds);
       video.removeEventListener('seeked', restoreStart);
     };
   }, [active, preload, videoFailed, dish.video]);
