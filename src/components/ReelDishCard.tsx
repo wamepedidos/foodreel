@@ -8,7 +8,7 @@ import { DishDescriptionSheet } from './DishDescriptionSheet';
 import { ReelMedia } from './ReelMedia';
 import { SocialActions } from './SocialActions';
 
-export function ReelDishCard({ dish, active, preloadMedia = false }: { dish: Dish; active: boolean; preloadMedia?: boolean }) {
+export function ReelDishCard({ dish, active }: { dish: Dish; active: boolean }) {
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [viewCount, setViewCount] = useState(dish.viewsCount);
@@ -39,7 +39,7 @@ export function ReelDishCard({ dish, active, preloadMedia = false }: { dish: Dis
   return (
     <section className="h-full snap-start px-3 py-4" data-dish-id={dish.id}>
       <article className="relative h-full overflow-hidden rounded-[28px] border border-white/10 bg-card shadow-2xl">
-        <ReelMedia active={mediaActive} dish={dish} preload={preloadMedia} />
+        <ReelMedia active={mediaActive} dish={dish} />
         <div className="absolute right-3 top-1/2 z-20 -translate-y-1/2">
           <SocialActions dish={dish} viewCount={viewCount} onComments={() => setCommentsOpen(true)} />
         </div>
