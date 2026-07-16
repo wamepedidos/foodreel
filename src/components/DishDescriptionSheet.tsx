@@ -43,7 +43,7 @@ export function DishDescriptionSheet({ dish, open, onClose }: { dish: Dish; open
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(24px+env(safe-area-inset-bottom))] pt-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="dish-title text-3xl font-bold leading-tight">{dish.name}</h2>
+              <h2 className="dish-title text-2xl font-bold leading-tight">{dish.name}</h2>
               <p className="text-sm text-muted">{dish.category}</p>
             </div>
             <p className="shrink-0 text-lg font-black text-accent">{formatCurrency(dish.price)}</p>
