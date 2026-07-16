@@ -8,7 +8,8 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
   const [loading, setLoading] = useState(true);
   const storedActiveDishId = useMenuStore((state) => state.activeDishId);
   const setStoredActiveDishId = useMenuStore((state) => state.setActiveDishId);
-  const [activeDishId, setActiveDishId] = useState<string | undefined>(storedActiveDishId ?? dishes[0]?.id);
+  const restoreDishId = sessionStorage.getItem('foodreel-active-dish-id') ?? storedActiveDishId ?? dishes[0]?.id;
+  const [activeDishId, setActiveDishId] = useState<string | undefined>(restoreDishId);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
           setActiveDishId(nextDishId);
           if (nextDishId) {
             setStoredActiveDishId(nextDishId);
+            sessionStorage.setItem('foodreel-active-dish-id', nextDishId);
           }
         }
       },
@@ -48,19 +50,22 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
   }, [dishes, loading, setStoredActiveDishId]);
 
   useEffect(() => {
-    if (loading || !storedActiveDishId || !containerRef.current) {
+    const targetDishId = sessionStorage.getItem('foodreel-active-dish-id') ?? storedActiveDishId;
+
+    if (loading || !targetDishId || !containerRef.current) {
       return;
     }
 
     const frame = window.requestAnimationFrame(() => {
       const container = containerRef.current;
-      const target = container?.querySelector<HTMLElement>(`[data-dish-id="${storedActiveDishId}"]`);
+      const cards = Array.from(container?.querySelectorAll<HTMLElement>('[data-dish-id]') ?? []);
+      const targetIndex = cards.findIndex((card) => card.dataset.dishId === targetDishId);
 
-      if (!container || !target) {
+      if (!container || targetIndex < 0) {
         return;
       }
 
-      container.scrollTo({ top: target.offsetTop, behavior: 'auto' });
+      container.scrollTo({ top: targetIndex * container.clientHeight, behavior: 'auto' });
     });
 
     return () => window.cancelAnimationFrame(frame);

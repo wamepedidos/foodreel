@@ -19,6 +19,7 @@ export function RestaurantHeader({ restaurant }: { restaurant: RestaurantConfig 
 
       if (activeDishId) {
         setActiveDishId(activeDishId);
+        sessionStorage.setItem('foodreel-active-dish-id', activeDishId);
       }
     }
 
