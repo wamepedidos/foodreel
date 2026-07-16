@@ -10,6 +10,10 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
   const setStoredActiveDishId = useMenuStore((state) => state.setActiveDishId);
   const [activeDishId, setActiveDishId] = useState<string | undefined>(storedActiveDishId ?? dishes[0]?.id);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeIndex = Math.max(
+    0,
+    dishes.findIndex((dish) => dish.id === activeDishId)
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => setLoading(false), 650);
@@ -60,8 +64,13 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
       className="reel-scroll h-full snap-y snap-mandatory overflow-y-auto overscroll-contain pb-[84px]"
       ref={containerRef}
     >
-      {dishes.map((dish) => (
-        <ReelDishCard active={activeDishId === dish.id} dish={dish} key={dish.id} />
+      {dishes.map((dish, index) => (
+        <ReelDishCard
+          active={activeDishId === dish.id}
+          dish={dish}
+          key={dish.id}
+          preloadMedia={index === activeIndex + 1 || index === activeIndex - 1}
+        />
       ))}
     </div>
   );
