@@ -63,7 +63,7 @@ export const useCartStore = create<CartState>()(
       totalQuantity: () => get().items.reduce((total, item) => total + item.quantity, 0)
     }),
     {
-      name: 'saborea-cart'
+      name: 'foodreel-cart'
     }
   )
 );

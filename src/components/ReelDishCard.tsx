@@ -19,7 +19,7 @@ export function ReelDishCard({ dish, active }: { dish: Dish; active: boolean }) 
       return undefined;
     }
 
-    const key = `saborea-viewed-${dish.id}`;
+    const key = `foodreel-viewed-${dish.id}`;
     if (sessionStorage.getItem(key)) {
       viewedRef.current = true;
       return undefined;

@@ -20,7 +20,7 @@ export const useSavedStore = create<SavedState>()(
       isSaved: (dishId) => get().savedIds.includes(dishId)
     }),
     {
-      name: 'saborea-saved'
+      name: 'foodreel-saved'
     }
   )
 );

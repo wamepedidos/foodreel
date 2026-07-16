@@ -10,12 +10,13 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['offline.html', 'icons/icon.svg', 'icons/maskable-icon.svg'],
       manifest: {
-        name: 'Saborea - Carta digital social',
-        short_name: 'Saborea',
+        name: 'FoodReel - Carta digital social',
+        short_name: 'FoodReel',
         description: 'Menu real e interaccion social para restaurantes.',
         theme_color: '#0B0B0C',
         background_color: '#0B0B0C',
         display: 'standalone',
+        lang: 'es',
         orientation: 'portrait',
         start_url: '/',
         scope: '/',
@@ -42,7 +43,7 @@ export default defineConfig({
             urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'saborea-food-images',
+              cacheName: 'foodreel-food-images',
               expiration: {
                 maxEntries: 24,
                 maxAgeSeconds: 60 * 60 * 24 * 14
@@ -56,7 +57,7 @@ export default defineConfig({
             urlPattern: /^https:\/\/cdn\.coverr\.co\/.*/i,
             handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'saborea-food-videos',
+              cacheName: 'foodreel-food-videos',
               expiration: {
                 maxEntries: 8,
                 maxAgeSeconds: 60 * 60 * 24 * 7

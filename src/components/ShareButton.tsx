@@ -13,7 +13,7 @@ export function ShareButton({ dish }: { dish: Dish }) {
         const url = window.location.href;
         const shareData = {
           title: dish.name,
-          text: `${dish.name} por ${formatCurrency(dish.price)} en Saborea.`,
+          text: `${dish.name} por ${formatCurrency(dish.price)} en FoodReel.`,
           url
         };
 

@@ -1,9 +1,9 @@
 import type { RestaurantConfig } from '../types';
 
 export const restaurantConfig: RestaurantConfig = {
-  brandName: 'Saborea',
+  brandName: 'FoodReel',
   restaurantName: 'La Esquina Burger',
-  logoText: 'S',
+  logoText: 'F',
   tableNumber: 7,
   colors: {
     primary: '#FF6500',
