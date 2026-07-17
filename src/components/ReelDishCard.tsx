@@ -7,6 +7,7 @@ import { CommentsSheet } from './CommentsSheet';
 import { DishDescriptionSheet } from './DishDescriptionSheet';
 import { ReelMedia } from './ReelMedia';
 import { SocialActions } from './SocialActions';
+import { WhatsAppInstallButton } from './WhatsAppInstallButton';
 
 export function ReelDishCard({ dish, active }: { dish: Dish; active: boolean }) {
   const [descriptionOpen, setDescriptionOpen] = useState(false);
@@ -43,6 +44,7 @@ export function ReelDishCard({ dish, active }: { dish: Dish; active: boolean }) 
         <div className="absolute right-3 top-1/2 z-20 -translate-y-1/2">
           <SocialActions dish={dish} viewCount={viewCount} onComments={() => setCommentsOpen(true)} />
         </div>
+        <WhatsAppInstallButton />
         <div className="absolute inset-x-0 bottom-0 z-10 p-4 pr-[78px]">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-black/45 px-3 py-1 text-xs font-semibold text-accent backdrop-blur">
             <Info className="size-3.5" />
