@@ -3,9 +3,86 @@
 @tailwind utilities;
 
 :root {
+  font-family: Poppins, Inter, ui-sans-serif, system-ui, sans-serif;
   color-scheme: dark;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  background: #0b0b0c;
+  --color-background: #0B0B0C;
+  --color-background-rgb: 11 11 12;
+  --color-background-secondary: #111113;
+  --color-background-secondary-rgb: 17 17 19;
+  --color-surface: #18181A;
+  --color-surface-rgb: 24 24 26;
+  --color-surface-elevated: #202023;
+  --color-surface-elevated-rgb: 32 32 35;
+  --color-surface-hover: #29292D;
+  --color-surface-hover-rgb: 41 41 45;
+  --color-text-primary: #FFFFFF;
+  --color-text-primary-rgb: 255 255 255;
+  --color-text-secondary: #B3B3B8;
+  --color-text-secondary-rgb: 179 179 184;
+  --color-text-muted: #85858B;
+  --color-text-muted-rgb: 133 133 139;
+  --color-border: rgba(255,255,255,0.10);
+  --color-border-strong: rgba(255,255,255,0.18);
+  --color-primary: #FC2D04;
+  --color-primary-rgb: 252 45 4;
+  --color-primary-hover: #E32804;
+  --color-primary-contrast: #FFFFFF;
+  --color-primary-contrast-rgb: 255 255 255;
+  --color-success: #2FBF71;
+  --color-success-rgb: 47 191 113;
+  --color-warning: #F5A524;
+  --color-warning-rgb: 245 165 36;
+  --color-error: #EF4444;
+  --color-error-rgb: 239 68 68;
+  --color-overlay: rgba(0,0,0,0.58);
+  --color-bottom-navigation: rgba(15,15,16,0.96);
+  --color-header: rgba(11,11,12,0.92);
+  --color-input: #1C1C1F;
+  --color-skeleton: #252529;
+  --color-page-glow: rgba(252, 45, 4, 0.12);
+  --color-page-sheen: rgba(255, 255, 255, 0.05);
+  background: var(--color-background);
+}
+
+:root.light,
+:root[data-theme='light'] {
+  color-scheme: light;
+  --color-background: #F5F4F1;
+  --color-background-rgb: 245 244 241;
+  --color-background-secondary: #ECEAE6;
+  --color-background-secondary-rgb: 236 234 230;
+  --color-surface: #F1F0ED;
+  --color-surface-rgb: 241 240 237;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-elevated-rgb: 255 255 255;
+  --color-surface-hover: #F2F0EC;
+  --color-surface-hover-rgb: 242 240 236;
+  --color-text-primary: #171719;
+  --color-text-primary-rgb: 23 23 25;
+  --color-text-secondary: #5D5D63;
+  --color-text-secondary-rgb: 93 93 99;
+  --color-text-muted: #74747B;
+  --color-text-muted-rgb: 116 116 123;
+  --color-border: rgba(20,20,24,0.10);
+  --color-border-strong: rgba(20,20,24,0.18);
+  --color-primary: #FC2D04;
+  --color-primary-rgb: 252 45 4;
+  --color-primary-hover: #E32804;
+  --color-primary-contrast: #FFFFFF;
+  --color-primary-contrast-rgb: 255 255 255;
+  --color-success: #178A4A;
+  --color-success-rgb: 23 138 74;
+  --color-warning: #B76800;
+  --color-warning-rgb: 183 104 0;
+  --color-error: #C93838;
+  --color-error-rgb: 201 56 56;
+  --color-overlay: rgba(20,20,24,0.42);
+  --color-bottom-navigation: rgba(255,255,255,0.97);
+  --color-header: rgba(255,255,255,0.94);
+  --color-input: #F1F0ED;
+  --color-skeleton: #E2E0DC;
+  --color-page-glow: rgba(252, 45, 4, 0.09);
+  --color-page-sheen: rgba(255, 255, 255, 0.66);
 }
 
 * {
@@ -22,15 +99,32 @@ body,
 body {
   margin: 0;
   min-width: 320px;
+  color: var(--color-text-primary);
   background:
-    radial-gradient(circle at 18% 0%, rgba(255, 101, 0, 0.12), transparent 32rem),
-    radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.05), transparent 28rem),
-    #0b0b0c;
+    radial-gradient(circle at 18% 0%, var(--color-page-glow), transparent 32rem),
+    radial-gradient(circle at 82% 12%, var(--color-page-sheen), transparent 28rem),
+    var(--color-background);
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+input,
+select,
+textarea {
+  color-scheme: inherit;
+}
+
+::selection {
+  background: rgb(var(--color-primary-rgb) / 0.24);
 }
 
 .reel-scroll {
@@ -57,7 +151,190 @@ input {
 }
 
 .dish-title {
-  font-family: Georgia, Cambria, "Times New Roman", serif;
+  font-family: Poppins, Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.bg-accent.text-white,
+.bg-accent .text-white,
+.text-contrast {
+  color: var(--color-primary-contrast);
+}
+
+[class*="bg-black"][class*="text-white"],
+[class*="bg-black"] [class*="text-white"],
+.media-overlay,
+.media-overlay [class*="text-white"] {
+  color: #fff;
+}
+
+.bottom-nav-shell {
+  background: rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.26) !important;
+  color: #fff !important;
+  text-shadow: none;
+}
+
+.bottom-nav-shell button,
+.bottom-nav-shell span {
+  color: inherit;
+  font-weight: 400;
+  text-shadow: none;
+}
+
+.bottom-nav-shell .bottom-nav-active {
+  color: rgb(var(--color-primary-rgb)) !important;
+}
+
+.light .shadow-2xl {
+  --tw-shadow: 0 18px 50px rgb(20 20 24 / 0.09);
+  --tw-shadow-colored: 0 18px 50px var(--tw-shadow-color);
+}
+
+.light .shadow-black\/20,
+.light .shadow-black\/25,
+.light .shadow-black\/35 {
+  --tw-shadow-color: rgb(20 20 24 / 0.08);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+
+.light .text-red-100,
+.light .text-red-200 {
+  color: var(--color-error);
+}
+
+.light .text-red-300,
+.light .text-red-400,
+.light .text-red-500 {
+  color: #D43F3F;
+}
+
+.light .text-emerald-300 {
+  color: var(--color-success);
+}
+
+.light .text-amber-200 {
+  color: var(--color-warning);
+}
+
+.light .bg-base,
+.light .bg-base\/70 {
+  background-color: rgb(var(--color-background-rgb) / 1);
+}
+
+.light .bg-base\/70 {
+  background-color: rgb(var(--color-background-rgb) / 0.7);
+}
+
+.light .bg-base\/90 {
+  background-color: rgb(var(--color-background-rgb) / 0.9);
+}
+
+.light .bg-base\/92 {
+  background-color: rgb(var(--color-background-rgb) / 0.92);
+}
+
+.light .bg-base\/95 {
+  background-color: rgb(var(--color-background-rgb) / 0.95);
+}
+
+.light .bg-base\/98 {
+  background-color: rgb(var(--color-background-rgb) / 0.98);
+}
+
+.light .bg-card,
+.light .bg-card\/70 {
+  background-color: rgb(var(--color-surface-elevated-rgb) / 1);
+}
+
+.light .bg-card\/70 {
+  background-color: rgb(var(--color-surface-elevated-rgb) / 0.7);
+}
+
+.light .bg-card\/95 {
+  background-color: rgb(var(--color-surface-elevated-rgb) / 0.95);
+}
+
+.light .bg-surface {
+  background-color: rgb(var(--color-surface-rgb) / 1);
+}
+
+.light .border-white\/5 {
+  border-color: rgb(var(--color-text-primary-rgb) / 0.05);
+}
+
+.light .border-white\/10 {
+  border-color: rgb(var(--color-text-primary-rgb) / 0.1);
+}
+
+.light .border-white\/12 {
+  border-color: rgb(var(--color-text-primary-rgb) / 0.12);
+}
+
+.light .border-white\/15 {
+  border-color: rgb(var(--color-text-primary-rgb) / 0.15);
+}
+
+.light .text-white {
+  color: rgb(var(--color-text-primary-rgb) / 1);
+}
+
+.light .text-white\/40 {
+  color: rgb(var(--color-text-primary-rgb) / 0.4);
+}
+
+.light .text-white\/42 {
+  color: rgb(var(--color-text-primary-rgb) / 0.42);
+}
+
+.light .text-white\/44 {
+  color: rgb(var(--color-text-primary-rgb) / 0.44);
+}
+
+.light .text-white\/46 {
+  color: rgb(var(--color-text-primary-rgb) / 0.46);
+}
+
+.light .text-white\/48 {
+  color: rgb(var(--color-text-primary-rgb) / 0.48);
+}
+
+.light .text-white\/52 {
+  color: rgb(var(--color-text-primary-rgb) / 0.52);
+}
+
+.light .text-white\/54 {
+  color: rgb(var(--color-text-primary-rgb) / 0.54);
+}
+
+.light .text-white\/56 {
+  color: rgb(var(--color-text-primary-rgb) / 0.56);
+}
+
+.light .text-white\/58 {
+  color: rgb(var(--color-text-primary-rgb) / 0.58);
+}
+
+.light .text-white\/60,
+.light .text-white\/62,
+.light .text-white\/64,
+.light .text-white\/68,
+.light .text-white\/70,
+.light .text-white\/72,
+.light .text-white\/75,
+.light .text-white\/80,
+.light .text-white\/85,
+.light .text-white\/90 {
+  color: rgb(var(--color-text-primary-rgb) / 0.72);
+}
+
+.light .bg-accent.text-white,
+.light .bg-accent .text-white,
+.light .text-contrast,
+.light [class*="bg-black"][class*="text-white"],
+.light [class*="bg-black"] [class*="text-white"],
+.light .media-overlay,
+.light .media-overlay [class*="text-white"] {
+  color: #fff;
 }
 
 @keyframes like-burst {
@@ -86,4 +363,22 @@ input {
     place-items: center;
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+.bottom-nav-shell,
+.bottom-nav-shell button,
+.bottom-nav-shell span,
+.bottom-nav-shell svg {
+  color: #fff !important;
+}
+
+.bottom-nav-shell button,
+.bottom-nav-shell span {
+  font-weight: 400 !important;
+}
+
+.bottom-nav-shell .bottom-nav-active,
+.bottom-nav-shell .bottom-nav-active span,
+.bottom-nav-shell .bottom-nav-active svg {
+  color: rgb(var(--color-primary-rgb)) !important;
 }

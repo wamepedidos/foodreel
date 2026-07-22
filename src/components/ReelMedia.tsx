@@ -1,10 +1,20 @@
-import { Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { Dish } from '../types';
 
-export function ReelMedia({ dish, active }: { dish: Dish; active: boolean }) {
+export function ReelMedia({
+  dish,
+  active,
+  compressed = false,
+  muted,
+  onMediaClick
+}: {
+  dish: Dish;
+  active: boolean;
+  compressed?: boolean;
+  muted: boolean;
+  onMediaClick?: () => void;
+}) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [muted, setMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
   const poster = dish.image.includes('foodreel-logo') ? undefined : dish.image;
 
@@ -28,7 +38,14 @@ export function ReelMedia({ dish, active }: { dish: Dish; active: boolean }) {
   }, [active, muted, videoFailed]);
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div
+      className={`absolute inset-x-0 top-0 bg-black transition-[height] duration-500 ease-out ${
+        compressed ? 'h-[46%]' : 'h-full'
+      }`}
+      onClick={onMediaClick}
+      role={compressed ? 'button' : undefined}
+      tabIndex={compressed ? 0 : undefined}
+    >
       {dish.video && !videoFailed ? (
         <video
           className="h-full w-full object-cover"
@@ -48,14 +65,7 @@ export function ReelMedia({ dish, active }: { dish: Dish; active: boolean }) {
           <div className="h-full w-full bg-black" />
         )
       )}
-      <button
-        aria-label={muted ? 'Activar sonido' : 'Silenciar video'}
-        className="absolute left-4 top-4 z-20 grid size-10 place-items-center rounded-full border border-white/15 bg-black/50 text-white backdrop-blur transition hover:border-accent/50"
-        onClick={() => setMuted((value) => !value)}
-        type="button"
-      >
-        {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
-      </button>
     </div>
   );
 }
+

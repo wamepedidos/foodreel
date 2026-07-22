@@ -5,9 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0B0B0C" />
     <meta name="description" content="FoodReel, carta digital social para restaurantes." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
     <link rel="icon" href="/icons/foodreel-192.png" type="image/png" />
     <link rel="apple-touch-icon" href="/icons/foodreel-192.png" />
     <title>FoodReel | Carta digital social</title>
+    <script>
+      (() => {
+        const storageKey = 'foodreel-theme-preference';
+        const root = document.documentElement;
+        const preference = (() => {
+          try {
+            const stored = localStorage.getItem(storageKey);
+            return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+          } catch {
+            return 'system';
+          }
+        })();
+        const systemTheme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const effectiveTheme = preference === 'system' ? systemTheme : preference;
+
+        root.classList.remove('light', 'dark');
+        root.classList.add(effectiveTheme);
+        root.dataset.theme = effectiveTheme;
+        root.dataset.themePreference = preference;
+        root.style.colorScheme = effectiveTheme;
+
+        const themeColor = effectiveTheme === 'dark' ? '#0B0B0C' : '#F5F4F1';
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

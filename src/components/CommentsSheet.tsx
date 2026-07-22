@@ -1,19 +1,55 @@
 import { Send, X } from 'lucide-react';
-import type { Dish } from '../types';
+import { useEffect, useState } from 'react';
+import { createDishComment, mergeComments, subscribeToDishComments } from '../services/commentsService';
+import type { Dish, ExperienceComment } from '../types';
+import { readCustomerProfile } from '../utils/customerProfile';
+import { getOrCreateCustomerSessionId } from '../utils/session';
+import { useCustomerHasName } from '../utils/useCustomerHasName';
+import { CustomerNameDialog } from './CustomerNameDialog';
 import { useToast } from './Toast';
-
-const comments = [
-  { name: 'Sofi R.', time: 'Hace 2 h', text: 'Increíble combinación, la salsa está buenísima.' },
-  { name: 'Juan P.', time: 'Hace 1 h', text: 'Se ve espectacular. La voy a pedir hoy.' },
-  { name: 'Meli G.', time: 'Hace 45 min', text: 'La mejor opción para compartir en la mesa.' }
-];
 
 export function CommentsSheet({ dish, open, onClose }: { dish: Dish; open: boolean; onClose: () => void }) {
   const { showToast } = useToast();
+  const [comments, setComments] = useState<ExperienceComment[]>([]);
+  const [draft, setDraft] = useState('');
+  const [hasCustomerName, setHasCustomerName] = useCustomerHasName(open);
+  const [nameDialogOpen, setNameDialogOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    return subscribeToDishComments(dish.id, (nextComments) => {
+      setComments((current) => mergeComments(current, nextComments));
+    });
+  }, [dish.id, open]);
 
   if (!open) {
     return null;
   }
+
+  const sendComment = () => {
+    const text = draft.trim();
+    if (!text || sending) return;
+    if (!hasCustomerName) {
+      setNameDialogOpen(true);
+      return;
+    }
+
+    setSending(true);
+    void createDishComment({
+      dishId: dish.id,
+      text,
+      userId: getOrCreateCustomerSessionId(),
+      userName: readCustomerProfile().displayName.trim() || 'Cliente'
+    })
+      .then((comment) => {
+        setComments((current) => mergeComments(current, [comment]));
+        setDraft('');
+        showToast('Comentario enviado');
+      })
+      .catch((error) => showToast(error instanceof Error ? error.message : 'No se pudo comentar'))
+      .finally(() => setSending(false));
+  };
 
   return (
     <div
@@ -39,33 +75,65 @@ export function CommentsSheet({ dish, open, onClose }: { dish: Dish; open: boole
         </div>
 
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
-          {comments.map((comment) => (
-            <div className="rounded-2xl bg-surface p-3" key={`${comment.name}-${comment.time}`}>
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-white">{comment.name}</span>
-                <span className="text-muted">{comment.time}</span>
+          {comments.length ? (
+            comments.map((comment) => (
+              <div className="rounded-2xl bg-surface p-3" key={comment.id}>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-white">{comment.userName}</span>
+                  <span className="text-muted">
+                    {new Date(comment.createdAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-5 text-white/80">{comment.text}</p>
               </div>
-              <p className="mt-2 text-sm leading-5 text-white/80">{comment.text}</p>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="rounded-2xl bg-surface p-3 text-sm text-muted">Aun no hay comentarios aprobados.</p>
+          )}
         </div>
 
-        <form
-          className="m-5 mb-[calc(20px+env(safe-area-inset-bottom))] flex shrink-0 items-center gap-2 rounded-2xl border border-white/10 bg-surface p-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            showToast('Los comentarios en línea se habilitarán próximamente');
-          }}
-        >
-          <input
-            className="min-w-0 flex-1 bg-transparent px-2 text-sm text-white outline-none placeholder:text-muted"
-            placeholder="Escribe un comentario..."
-          />
-          <button aria-label="Enviar comentario" className="grid size-9 place-items-center rounded-full bg-accent text-white" type="submit">
-            <Send className="size-4" />
-          </button>
-        </form>
+        {hasCustomerName ? (
+          <form
+            className="m-5 mb-[calc(20px+env(safe-area-inset-bottom))] flex shrink-0 items-center gap-2 rounded-2xl border border-white/10 bg-surface p-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              sendComment();
+            }}
+          >
+            <input
+              className="min-w-0 flex-1 bg-transparent px-2 text-sm text-white outline-none placeholder:text-muted"
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Escribe un comentario..."
+              value={draft}
+            />
+            <button
+              aria-label="Enviar comentario"
+              className="grid size-9 place-items-center rounded-full bg-accent text-white disabled:opacity-50"
+              disabled={sending}
+              type="submit"
+            >
+              <Send className="size-4" />
+            </button>
+          </form>
+        ) : (
+          <div className="m-5 mb-[calc(20px+env(safe-area-inset-bottom))] shrink-0">
+            <button
+              className="h-12 w-full rounded-2xl bg-accent px-4 text-sm font-normal text-white shadow-glow"
+              onClick={() => setNameDialogOpen(true)}
+              type="button"
+            >
+              Dinos tu nombre para enviar comentarios
+            </button>
+          </div>
+        )}
       </div>
+      <CustomerNameDialog
+        description="Tu nombre aparecera junto a los comentarios que hagas en los platos."
+        onClose={() => setNameDialogOpen(false)}
+        onConfirm={() => setHasCustomerName(true)}
+        open={nameDialogOpen}
+        title="Dinos tu nombre"
+      />
     </div>
   );
 }

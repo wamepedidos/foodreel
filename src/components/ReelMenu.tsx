@@ -1,14 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { Grid2X2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Dish } from '../types';
 import { useMenuStore } from '../store/useMenuStore';
 import { LoadingSkeleton } from './LoadingSkeleton';
 import { ReelDishCard } from './ReelDishCard';
+import { WaiterCallButton } from './WaiterCallButton';
 
 export function ReelMenu({ dishes }: { dishes: Dish[] }) {
   const [loading, setLoading] = useState(true);
   const storedActiveDishId = useMenuStore((state) => state.activeDishId);
   const setStoredActiveDishId = useMenuStore((state) => state.setActiveDishId);
+  const selectedCategory = useMenuStore((state) => state.selectedCategory);
+  const setSelectedCategory = useMenuStore((state) => state.setSelectedCategory);
+  const setViewMode = useMenuStore((state) => state.setViewMode);
+  const categories = useMemo(() => ['Todos', ...Array.from(new Set(dishes.map((dish) => dish.category).filter(Boolean)))], [dishes]);
   const [activeDishId, setActiveDishId] = useState<string | undefined>(storedActiveDishId ?? dishes[0]?.id);
+  const [muted, setMuted] = useState(true);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const activeIndex = Math.max(
     0,
@@ -20,6 +27,40 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
     const timer = window.setTimeout(() => setLoading(false), 650);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (selectedCategory === 'Todos' || categories.includes(selectedCategory)) {
+      return;
+    }
+    setSelectedCategory('Todos');
+  }, [categories, selectedCategory, setSelectedCategory]);
+
+  useEffect(() => {
+    const firstDishId = dishes[0]?.id;
+    if (!firstDishId) {
+      setActiveDishId(undefined);
+      return;
+    }
+
+    if (!dishes.some((dish) => dish.id === activeDishId)) {
+      setActiveDishId(firstDishId);
+      setStoredActiveDishId(firstDishId);
+      containerRef.current?.scrollTo({ top: 0 });
+    }
+  }, [activeDishId, dishes, setStoredActiveDishId]);
+
+  const selectCategory = (category: string) => {
+    setSelectedCategory(category);
+    const targetDish = category === 'Todos' ? dishes[0] : dishes.find((dish) => dish.category === category);
+    if (!targetDish || !containerRef.current) return;
+
+    const target = containerRef.current.querySelector<HTMLElement>(`[data-dish-id="${targetDish.id}"]`);
+    if (!target) return;
+
+    setActiveDishId(targetDish.id);
+    setStoredActiveDishId(targetDish.id);
+    containerRef.current.scrollTo({ behavior: 'smooth', top: target.offsetTop });
+  };
 
   useEffect(() => {
     if (loading || !containerRef.current) {
@@ -37,6 +78,10 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
           setActiveDishId(nextDishId);
           if (nextDishId) {
             setStoredActiveDishId(nextDishId);
+            const activeDish = dishes.find((dish) => dish.id === nextDishId);
+            if (activeDish?.category) {
+              setSelectedCategory(activeDish.category);
+            }
           }
         }
       },
@@ -50,11 +95,11 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
     cards.forEach((card) => observer.observe(card));
 
     return () => observer.disconnect();
-  }, [dishes, loading, setStoredActiveDishId]);
+  }, [dishes, loading, setSelectedCategory, setStoredActiveDishId]);
 
   if (loading) {
     return (
-      <div className="h-full overflow-hidden pb-[84px]">
+      <div className="h-full overflow-hidden">
         <LoadingSkeleton />
       </div>
     );
@@ -62,17 +107,83 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
 
   return (
     <>
+      <ReelCategoryBar
+        categories={categories}
+        onSelect={selectCategory}
+        onShowGrid={() => setViewMode('grid')}
+        selectedCategory={selectedCategory}
+      />
       <div
-        className="reel-scroll h-full snap-y snap-mandatory overflow-y-auto overscroll-contain pb-[84px]"
+        className="reel-scroll h-full snap-y snap-mandatory overflow-y-auto overscroll-contain"
         ref={containerRef}
       >
         {dishes.map((dish) => (
-          <ReelDishCard active={activeDishId === dish.id} dish={dish} key={dish.id} />
+          <ReelDishCard
+            active={activeDishId === dish.id}
+            dish={dish}
+            key={dish.id}
+            muted={muted}
+            onToggleAudio={() => setMuted((value) => !value)}
+            topBar
+          />
         ))}
       </div>
       <NextVideoPreloader dish={nextDish} />
     </>
   );
+}
+
+function ReelCategoryBar({
+  categories,
+  onSelect,
+  onShowGrid,
+  selectedCategory
+}: {
+  categories: string[];
+  onSelect: (category: string) => void;
+  onShowGrid: () => void;
+  selectedCategory: string;
+}) {
+  return (
+    <div className="absolute inset-x-0 top-0 z-30 bg-transparent px-4 pt-[calc(1px+env(safe-area-inset-top))] text-paper">
+      <div className="flex h-8 items-center gap-3 border-b border-paper/28">
+        <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-4 overflow-x-auto">
+          {categories.map((category) => {
+            const active = selectedCategory === category;
+            return (
+              <button
+                aria-pressed={active}
+                className="relative h-8 shrink-0 px-0 text-xs font-normal text-paper transition hover:text-paper"
+                key={category}
+                onClick={() => onSelect(category)}
+                type="button"
+              >
+                {formatCategoryLabel(category)}
+                {active ? <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-accent" /> : null}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            aria-label="Abrir carta en cuadricula"
+            className="grid size-6 place-items-center rounded-full border border-paper/45 bg-transparent text-paper transition hover:border-accent/80 hover:text-accent"
+            onClick={onShowGrid}
+            title="Abrir carta en cuadricula"
+            type="button"
+          >
+            <Grid2X2 className="size-3.5" />
+          </button>
+          <WaiterCallButton variant="reel" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatCategoryLabel(category: string) {
+  if (category === 'Plato fuerte') return 'Platos fuertes';
+  return category;
 }
 
 function NextVideoPreloader({ dish }: { dish?: Dish }) {

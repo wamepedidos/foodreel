@@ -1,9 +1,10 @@
 import { Send } from 'lucide-react';
 import type { Dish } from '../types';
-import { formatCurrency } from '../utils/format';
+import { compactCount, formatCurrency } from '../utils/format';
 import { useToast } from './Toast';
+import { incrementDishShare } from '../services/dishesService';
 
-export function ShareButton({ compact = false, dish }: { compact?: boolean; dish: Dish }) {
+export function ShareButton({ compact = false, dish, tone = 'dark' }: { compact?: boolean; dish: Dish; tone?: 'dark' | 'light' }) {
   const { showToast } = useToast();
 
   return (
@@ -11,8 +12,10 @@ export function ShareButton({ compact = false, dish }: { compact?: boolean; dish
       aria-label={`Compartir ${dish.name}`}
       className={
         compact
-          ? 'inline-flex h-8 items-center gap-1 rounded-full bg-black/20 px-2 text-white/70 transition hover:text-white'
-          : 'grid place-items-center gap-1 text-white'
+          ? tone === 'light'
+            ? 'inline-flex h-8 items-center gap-1 rounded-full border border-neutral-200 bg-neutral-100 px-2 text-neutral-700 transition hover:text-neutral-950'
+            : 'inline-flex h-8 items-center gap-1 rounded-full bg-black/20 px-2 text-white/70 transition hover:text-white'
+          : 'grid place-items-center gap-1 text-contrast'
       }
       onClick={async () => {
         const url = window.location.href;
@@ -25,9 +28,11 @@ export function ShareButton({ compact = false, dish }: { compact?: boolean; dish
         try {
           if (navigator.share) {
             await navigator.share(shareData);
+            void incrementDishShare(dish.id, 'nativeShare');
             showToast('Plato compartido');
           } else {
             await navigator.clipboard.writeText(url);
+            void incrementDishShare(dish.id, 'copiedLink');
             showToast('Enlace copiado');
           }
         } catch {
@@ -37,15 +42,19 @@ export function ShareButton({ compact = false, dish }: { compact?: boolean; dish
       type="button"
     >
       {compact ? (
-        <Send className="size-3.5" />
+        <>
+          <Send className="size-3.5" />
+          <span>{compactCount(dish.sharesCount ?? 0)}</span>
+        </>
       ) : (
         <>
-          <span className="grid size-11 place-items-center rounded-full bg-black/45 backdrop-blur">
-            <Send className="size-6" />
+          <span data-social-circle className="grid size-10 place-items-center rounded-full border border-white/[0.12] bg-black/[0.42] backdrop-blur-xl">
+            <Send className="size-[19px]" />
           </span>
-          <span className="text-[11px] font-bold">Enviar</span>
+          <span className="text-[0.63rem] font-medium leading-none">Compartir</span>
         </>
       )}
     </button>
   );
 }
+

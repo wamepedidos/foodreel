@@ -17,7 +17,7 @@ export function DishDescriptionSheet({ dish, open, onClose }: { dish: Dish; open
       className="fixed inset-0 z-[80] flex justify-center bg-black/80 backdrop-blur-sm md:items-center"
       role="dialog"
     >
-      <div className="flex h-dvh w-full max-w-[520px] flex-col overflow-hidden bg-card shadow-2xl md:h-[calc(100dvh-32px)] md:rounded-[28px] md:border md:border-white/10">
+      <div className="flex h-dvh w-full max-w-[520px] flex-col overflow-hidden bg-paper text-neutral-950 shadow-2xl md:h-[calc(100dvh-32px)] md:rounded-[28px] md:border md:border-black/10">
         <div className="relative h-[38dvh] min-h-[260px] max-h-[420px] shrink-0 bg-black">
           {dish.video ? (
             <video
@@ -50,19 +50,19 @@ export function DishDescriptionSheet({ dish, open, onClose }: { dish: Dish; open
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(24px+env(safe-area-inset-bottom))] pt-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="dish-title text-2xl font-bold leading-tight">{dish.name}</h2>
-              <p className="text-sm text-muted">{dish.category}</p>
+              <h2 className="dish-title text-2xl font-bold leading-tight text-neutral-950">{dish.name}</h2>
+              <p className="text-sm font-semibold text-neutral-500">{dish.category}</p>
             </div>
             <p className="shrink-0 text-lg font-black text-accent">{formatCurrency(dish.price)}</p>
           </div>
 
-          <p className="mt-4 text-base font-semibold leading-7 text-white/90">{dish.description}</p>
+          <p className="mt-4 text-base font-semibold leading-7 text-neutral-900">{dish.description}</p>
 
-          <h3 className="mt-5 text-sm font-bold text-white">Ingredientes</h3>
+          <h3 className="mt-5 text-sm font-bold text-neutral-950">Ingredientes</h3>
           <div className="mt-3 flex flex-wrap gap-2">
             {dish.ingredients.map((ingredient) => (
               <span
-                className="rounded-full border border-white/10 bg-surface px-3 py-1 text-xs text-white/80"
+                className="rounded-full border border-neutral-200 bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-800"
                 key={ingredient}
               >
                 {ingredient}
@@ -72,7 +72,7 @@ export function DishDescriptionSheet({ dish, open, onClose }: { dish: Dish; open
 
           <div className="mt-6 flex items-stretch gap-2">
             <button
-              className="h-12 flex-1 rounded-2xl border border-white/10 bg-surface font-semibold text-white transition hover:border-accent/50"
+              className="h-12 flex-1 rounded-2xl border border-neutral-200 bg-neutral-100 font-semibold text-neutral-950 transition hover:border-accent/50"
               onClick={onClose}
               type="button"
             >
