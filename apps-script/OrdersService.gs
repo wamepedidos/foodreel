@@ -17,10 +17,7 @@ function createOrder(payload, context) {
         throw appError('DISH_UNAVAILABLE', 'Uno de los platos no esta disponible.');
       }
       var quantity = Math.max(1, Math.min(99, toNumber(item.quantity)));
-      var selectedSauces = normalizeSelectedSauces(dish, item.selectedSauces || []);
-      var selectedExtras = normalizeSelectedAdditions(dish, item.selectedExtras || []);
-      var removedIngredients = normalizeRemovedIngredients(dish, item.selectedOptions || []);
-      var unitPrice = toNumber(dish.price) + selectedExtras.reduce(function(total, extra) { return total + toNumber(extra.price); }, 0);
+      var unitPrice = toNumber(dish.price);
       var subtotal = quantity * unitPrice;
       return {
         id: makeId('item'),
@@ -31,9 +28,9 @@ function createOrder(payload, context) {
         dishImageUrl: dish.mainImageUrl,
         quantity: quantity,
         unitPrice: unitPrice,
-        selectedOptionsJson: safeJson(removedIngredients),
-        selectedSaucesJson: safeJson(selectedSauces),
-        selectedExtrasJson: safeJson(selectedExtras),
+        selectedOptionsJson: safeJson(item.selectedOptions || []),
+        selectedSaucesJson: safeJson([]),
+        selectedExtrasJson: safeJson(item.selectedExtras || []),
         notes: item.notes || '',
         subtotal: subtotal,
         isUpsell: Boolean(item.isUpsell),
@@ -77,60 +74,6 @@ function createOrder(payload, context) {
   } finally {
     lock.releaseLock();
   }
-}
-
-function normalizeSelectedSauces(dish, requested) {
-  var available = findManyBy('SAUCES', 'dishId', dish.id).filter(function(sauce) {
-    return toBool(sauce.available);
-  });
-  var values = normalizeOptionValues(requested);
-  var selected = available.filter(function(sauce) {
-    return values.indexOf(String(sauce.id)) !== -1 || values.indexOf(String(sauce.name)) !== -1;
-  }).map(function(sauce) {
-    return { name: sauce.name, value: sauce.name, price: toNumber(sauce.price) };
-  });
-  var minimum = toNumber(dish.minimumSauces);
-  var maximum = toNumber(dish.maximumSauces) || available.length;
-  if (toBool(dish.sauceSelectionRequired) && selected.length < minimum) {
-    throw appError('INVALID_SAUCES', 'Selecciona las salsas requeridas para ' + dish.title + '.');
-  }
-  if (maximum > 0 && selected.length > maximum) {
-    throw appError('INVALID_SAUCES', 'Seleccionaste demasiadas salsas para ' + dish.title + '.');
-  }
-  return selected;
-}
-
-function normalizeSelectedAdditions(dish, requested) {
-  var available = findManyBy('ADDITIONS', 'dishId', dish.id).filter(function(addition) {
-    return toBool(addition.available);
-  });
-  var values = normalizeOptionValues(requested);
-  return available.filter(function(addition) {
-    return values.indexOf(String(addition.id)) !== -1 || values.indexOf(String(addition.name)) !== -1;
-  }).map(function(addition) {
-    return { name: addition.name, value: addition.name, price: toNumber(addition.price) };
-  });
-}
-
-function normalizeRemovedIngredients(dish, requested) {
-  var removable = parseJson(dish.removableIngredientsJson, parseJson(dish.ingredientsJson, []));
-  var values = normalizeOptionValues(requested);
-  return removable.filter(function(ingredient) {
-    return values.indexOf(String(ingredient)) !== -1;
-  }).map(function(ingredient) {
-    return { name: 'Sin ingrediente', value: ingredient };
-  });
-}
-
-function normalizeOptionValues(options) {
-  if (!Array.isArray(options)) return [];
-  return options.map(function(option) {
-    if (typeof option === 'string') return option;
-    if (option && option.id) return String(option.id);
-    if (option && option.value) return String(option.value);
-    if (option && option.name) return String(option.name);
-    return '';
-  }).filter(Boolean);
 }
 
 function getOrder(payload) {
@@ -205,7 +148,6 @@ function orderToFrontend(row) {
       unitPrice: toNumber(item.unitPrice),
       selectedOptions: parseJson(item.selectedOptionsJson, []),
       selectedExtras: parseJson(item.selectedExtrasJson, []),
-      selectedSauces: parseJson(item.selectedSaucesJson, []),
       notes: item.notes,
       subtotal: toNumber(item.subtotal)
     };

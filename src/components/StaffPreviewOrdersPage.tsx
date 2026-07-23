@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { restaurantConfig } from '../config/restaurant';
 import { canTransitionOrderStatus, ORDER_STATUS_LABELS, ORDER_STATUS_ORDER } from '../orders/orderStatus';
 import { subscribeToRestaurantOrders, updateOrderStatus } from '../services/ordersService';
-import type { OrderItemOption, OrderRecord, OrderStatus } from '../types';
+import type { OrderRecord, OrderStatus } from '../types';
 import { ThemeSelector } from '../theme/ThemeSelector';
 import { formatCurrency } from '../utils/format';
 
@@ -15,52 +15,6 @@ const staffActions: Array<{ label: string; status: OrderStatus; icon: typeof Che
   { label: 'Listo', status: 'ready', icon: PackageCheck },
   { label: 'Entregado', status: 'delivered', icon: Truck }
 ];
-
-function compactList(items: unknown) {
-  return Array.isArray(items) ? items.map(String).map((item) => item.trim()).filter(Boolean) : [];
-}
-
-function optionValues(items: unknown) {
-  if (!Array.isArray(items)) {
-    return [];
-  }
-
-  return items
-    .map((item) => {
-      if (typeof item === 'string') {
-        return item;
-      }
-
-      if (item && typeof item === 'object' && 'value' in item) {
-        return String(item.value);
-      }
-
-      return '';
-    })
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function optionList(items: unknown): OrderItemOption[] {
-  if (!Array.isArray(items)) {
-    return [];
-  }
-
-  return items
-    .map((item) => {
-      if (typeof item === 'string') {
-        return { name: item, value: item };
-      }
-
-      if (item && typeof item === 'object' && 'value' in item) {
-        const option = item as OrderItemOption;
-        return { name: option.name || option.value, price: option.price, value: String(option.value) };
-      }
-
-      return null;
-    })
-    .filter((item): item is OrderItemOption => Boolean(item?.value));
-}
 
 export function StaffPreviewOrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
@@ -198,39 +152,11 @@ export function StaffPreviewOrdersPage() {
 }
 
 function StaffOrderItem({ item, orderId }: { item: OrderRecord['items'][number]; orderId: string }) {
-  const removedIngredients = compactList(item.removedIngredients).length
-    ? compactList(item.removedIngredients)
-    : optionValues(item.selectedOptions);
-  const sauces = optionList(item.sauces).length ? optionList(item.sauces) : optionList(item.selectedSauces);
-  const additions = optionList(item.additions).length ? optionList(item.additions) : optionList(item.selectedExtras);
-
   return (
     <div className="flex items-start justify-between gap-3 rounded-2xl bg-surface px-3 py-2" key={`${orderId}-${item.dishId}`}>
       <div className="min-w-0">
         <p className="text-sm font-bold text-white">{item.name}</p>
         {item.notes ? <p className="mt-1 text-xs text-muted">{item.notes}</p> : null}
-        {sauces.length || removedIngredients.length || additions.length ? (
-          <div className="mt-2 grid gap-1.5">
-            {sauces.length ? (
-              <p className="text-xs font-medium leading-5 text-muted">
-                <span className="font-bold text-accent">Salsas: </span>
-                {sauces.map((sauce) => sauce.value).join(', ')}
-              </p>
-            ) : null}
-            {removedIngredients.length ? (
-              <p className="text-xs font-medium leading-5 text-muted">
-                <span className="font-bold text-accent">Sin ingredientes: </span>
-                {removedIngredients.join(', ')}
-              </p>
-            ) : null}
-            {additions.length ? (
-              <p className="text-xs font-medium leading-5 text-muted">
-                <span className="font-bold text-accent">Adiciones: </span>
-                {additions.map((addition) => `${addition.value}${addition.price ? ` +${formatCurrency(addition.price)}` : ''}`).join(', ')}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
       </div>
       <p className="shrink-0 text-sm font-black text-accent">x{item.quantity}</p>
     </div>

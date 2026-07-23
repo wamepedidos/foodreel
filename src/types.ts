@@ -1,14 +1,5 @@
 export type DishTag = 'Más pedido' | 'Nuevo' | 'Recomendado' | 'Promoción';
 
-export type DishCustomizationChoice = {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  available: boolean;
-  defaultSelected?: boolean;
-};
-
 export type Dish = {
   id: string;
   name: string;
@@ -19,12 +10,6 @@ export type Dish = {
   image: string;
   video?: string;
   ingredients: string[];
-  removableIngredients?: string[];
-  sauces?: DishCustomizationChoice[];
-  sauceSelectionRequired?: boolean;
-  minimumSauces?: number;
-  maximumSauces?: number;
-  additions?: DishCustomizationChoice[];
   available: boolean;
   tag?: DishTag;
   servingSizes?: number[];
@@ -82,20 +67,14 @@ export type OrderItemOption = {
 };
 
 export type OrderItem = {
-  cartItemId?: string;
   dishId: string;
   name: string;
   image: string;
   quantity: number;
   unitPrice: number;
-  baseUnitPrice?: number;
   selectedOptions: OrderItemOption[];
-  selectedSauces?: OrderItemOption[];
   selectedExtras: OrderItemOption[];
   ingredients?: string[];
-  removedIngredients?: string[];
-  sauces?: string[] | OrderItemOption[];
-  additions?: string[] | OrderItemOption[];
   notes: string;
   subtotal: number;
 };

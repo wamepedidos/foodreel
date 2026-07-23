@@ -82,17 +82,6 @@ function toSeedDish(index: number): AdminDish {
     maximumSauces: 2,
     features: [dish.tag ?? 'Favorito de los clientes'],
     ingredients: dish.ingredients,
-    removableIngredients: dish.ingredients,
-    additions: [
-      {
-        id: createId('addition'),
-        name: 'Extra queso',
-        description: 'Porcion adicional',
-        price: 3500,
-        available: true,
-        defaultSelected: false
-      }
-    ],
     allergens: index % 4 === 0 ? ['Lacteos'] : [],
     dietaryNotes: '',
     crossContaminationWarning: '',
@@ -121,32 +110,6 @@ export function adminDishToDish(dish: AdminDish): Dish {
   const features = normalizeStringArray(dish.features);
   const allergens = normalizeStringArray(dish.allergens);
   const ingredients = normalizeStringArray(dish.ingredients);
-  const sauces = Array.isArray(dish.sauces)
-    ? dish.sauces
-        .filter((sauce) => sauce.available !== false)
-        .map((sauce) => ({
-          available: sauce.available !== false,
-          defaultSelected: Boolean(sauce.defaultSelected),
-          description: String(sauce.description ?? ''),
-          id: String(sauce.id || sauce.name),
-          name: String(sauce.name).trim(),
-          price: Number(sauce.price) || 0
-        }))
-        .filter((sauce) => sauce.name)
-    : [];
-  const additions = Array.isArray(dish.additions)
-    ? dish.additions
-        .filter((addition) => addition.available !== false)
-        .map((addition) => ({
-          available: addition.available !== false,
-          defaultSelected: Boolean(addition.defaultSelected),
-          description: String(addition.description ?? ''),
-          id: String(addition.id || addition.name),
-          name: String(addition.name).trim(),
-          price: Number(addition.price) || 0
-        }))
-        .filter((addition) => addition.name)
-    : [];
   const servingSizes = normalizeNumberArray(dish.servingSizes);
 
   return {
@@ -158,14 +121,6 @@ export function adminDishToDish(dish: AdminDish): Dish {
     id: dish.id,
     image: dish.mainImageUrl || dish.videoThumbnailUrl || '/brand/foodreel-logo.png',
     ingredients,
-    removableIngredients: normalizeStringArray(dish.removableIngredients).length
-      ? normalizeStringArray(dish.removableIngredients)
-      : ingredients,
-    sauces,
-    sauceSelectionRequired: normalizeBoolean(dish.sauceSelectionRequired),
-    minimumSauces: Number(dish.minimumSauces) || 0,
-    maximumSauces: Number(dish.maximumSauces) || sauces.length,
-    additions,
     allergens,
     crossContaminationWarning: dish.crossContaminationWarning,
     dietaryNotes: dish.dietaryNotes,
@@ -547,34 +502,15 @@ function dishToAdminDish(dish: Dish): AdminDish {
     isVegetarian: dish.isVegetarian ?? false,
     likesCount: dish.likesCount,
     mainImageUrl: dish.image,
-    maximumSauces: dish.sauces?.length ? Math.min(2, dish.sauces.length) : 0,
+    maximumSauces: 0,
     minimumSauces: 0,
     ordersCount: 0,
     preparationTimeMax: '',
     preparationTimeMin: '',
     price: dish.price,
     restaurantId: restaurantConfig.restaurantId,
-    removableIngredients: dish.removableIngredients ?? dish.ingredients,
-    sauceSelectionRequired: Boolean(dish.sauceSelectionRequired),
-    sauces:
-      dish.sauces?.map((sauce) => ({
-        id: createId('sauce'),
-        name: sauce.name,
-        description: sauce.description ?? '',
-        price: sauce.price,
-        available: sauce.available,
-        defaultSelected: Boolean(sauce.defaultSelected),
-        imageUrl: ''
-      })) ?? [],
-    additions:
-      dish.additions?.map((addition) => ({
-        id: createId('addition'),
-        name: addition.name,
-        description: addition.description ?? '',
-        price: addition.price,
-        available: addition.available,
-        defaultSelected: Boolean(addition.defaultSelected)
-      })) ?? [],
+    sauceSelectionRequired: false,
+    sauces: [],
     servingDescription: dish.servingDescription ?? '',
     servingSizes: dish.servingSizes ?? [1],
     sharesCount: dish.sharesCount ?? 0,
