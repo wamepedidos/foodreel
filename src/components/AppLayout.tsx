@@ -10,8 +10,10 @@ export function AppLayout({ children, restaurant }: { children: ReactNode; resta
   const viewMode = useMenuStore((state) => state.viewMode);
   const location = useLocation();
   const mockupRoute = location.pathname === '/comunidad/mockup';
+  const orderRoute = location.pathname === '/pedido';
   const expandedRoute = location.pathname.startsWith('/experience') || location.pathname === '/comunidad';
   const immersiveMenu = mockupRoute || (location.pathname === '/menu' && viewMode === 'reel');
+  const hideHeader = immersiveMenu || orderRoute;
   const maxWidthClass = mockupRoute ? 'max-w-[520px]' : expandedRoute || viewMode === 'grid' ? 'max-w-[1180px]' : 'max-w-[520px]';
   const frameClass = immersiveMenu
     ? 'border-0 md:my-0 md:h-dvh md:rounded-none'
@@ -23,7 +25,7 @@ export function AppLayout({ children, restaurant }: { children: ReactNode; resta
         aria-label={`${restaurant.restaurantName} - Mesa ${restaurant.tableNumber}`}
         className={`relative mx-auto flex h-dvh w-full flex-col overflow-hidden bg-base shadow-2xl transition-[max-width] duration-300 ${frameClass} ${maxWidthClass}`}
       >
-        {immersiveMenu ? null : <RestaurantHeader restaurant={restaurant} />}
+        {hideHeader ? null : <RestaurantHeader restaurant={restaurant} />}
         <main className="relative min-h-0 w-full flex-1 overflow-hidden">{children}</main>
         <BottomNavigation />
       </div>

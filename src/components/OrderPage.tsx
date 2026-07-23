@@ -16,7 +16,7 @@ const PENDING_IDEMPOTENCY_KEY = 'foodreel-pending-order-idempotency-key';
 const ACTIVE_ORDER_ID = 'foodreel-active-order-id';
 
 const orderStyles = {
-  shell: 'h-full overflow-y-auto px-3 pb-[112px] pt-3 sm:px-4',
+  shell: 'h-full overflow-y-auto px-3 pb-[112px] pt-[calc(14px+env(safe-area-inset-top))] sm:px-4',
   content: 'mx-auto flex max-w-[520px] flex-col gap-3',
   card: 'rounded-[22px] border border-white/10 bg-card p-4 shadow-2xl shadow-black/25',
   surfaceCard: 'rounded-[22px] border border-white/10 bg-surface p-3 shadow-2xl shadow-black/20',
