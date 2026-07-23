@@ -32,7 +32,7 @@ if (import.meta.env.DEV) {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route path="/" element={<Navigate to="/menu" replace />} />
           <Route path="/menu" element={<App />} />
