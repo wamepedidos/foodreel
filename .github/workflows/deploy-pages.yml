@@ -35,6 +35,7 @@ jobs:
         run: npm run build
         env:
           GITHUB_PAGES: true
+          VITE_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbxUd-hjWkeSzY05mrsxw9XfFIZ4DwEvdXPItI4q9-JQ2ymvktObL0Djlv3BC-oNJd8/exec
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
