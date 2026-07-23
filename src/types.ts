@@ -10,6 +10,8 @@ export type Dish = {
   image: string;
   video?: string;
   ingredients: string[];
+  removableIngredients?: string[];
+  additions?: DishAddition[];
   available: boolean;
   tag?: DishTag;
   servingSizes?: number[];
@@ -27,6 +29,15 @@ export type Dish = {
   commentsCount: number;
   sharesCount?: number;
   addedToOrderCount?: number;
+};
+
+export type DishAddition = {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  available: boolean;
+  defaultSelected?: boolean;
 };
 
 export type RestaurantConfig = {

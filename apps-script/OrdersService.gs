@@ -17,7 +17,9 @@ function createOrder(payload, context) {
         throw appError('DISH_UNAVAILABLE', 'Uno de los platos no esta disponible.');
       }
       var quantity = Math.max(1, Math.min(99, toNumber(item.quantity)));
-      var unitPrice = toNumber(dish.price);
+      var selectedExtras = normalizeSelectedAdditions(dish, item.selectedExtras || []);
+      var removedIngredients = normalizeRemovedIngredients(dish, item.selectedOptions || []);
+      var unitPrice = toNumber(dish.price) + selectedExtras.reduce(function(total, extra) { return total + toNumber(extra.price); }, 0);
       var subtotal = quantity * unitPrice;
       return {
         id: makeId('item'),
@@ -28,9 +30,9 @@ function createOrder(payload, context) {
         dishImageUrl: dish.mainImageUrl,
         quantity: quantity,
         unitPrice: unitPrice,
-        selectedOptionsJson: safeJson(item.selectedOptions || []),
+        selectedOptionsJson: safeJson(removedIngredients),
         selectedSaucesJson: safeJson([]),
-        selectedExtrasJson: safeJson(item.selectedExtras || []),
+        selectedExtrasJson: safeJson(selectedExtras),
         notes: item.notes || '',
         subtotal: subtotal,
         isUpsell: Boolean(item.isUpsell),
@@ -74,6 +76,39 @@ function createOrder(payload, context) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function normalizeSelectedAdditions(dish, requested) {
+  var available = findManyBy('ADDITIONS', 'dishId', dish.id).filter(function(addition) {
+    return toBool(addition.available);
+  });
+  var values = normalizeOptionValues(requested);
+  return available.filter(function(addition) {
+    return values.indexOf(String(addition.id)) !== -1 || values.indexOf(String(addition.name)) !== -1;
+  }).map(function(addition) {
+    return { name: addition.name, value: addition.name, price: toNumber(addition.price) };
+  });
+}
+
+function normalizeRemovedIngredients(dish, requested) {
+  var removable = parseJson(dish.removableIngredientsJson, parseJson(dish.ingredientsJson, []));
+  var values = normalizeOptionValues(requested);
+  return removable.filter(function(ingredient) {
+    return values.indexOf(String(ingredient)) !== -1;
+  }).map(function(ingredient) {
+    return { name: 'Sin ingrediente', value: ingredient };
+  });
+}
+
+function normalizeOptionValues(options) {
+  if (!Array.isArray(options)) return [];
+  return options.map(function(option) {
+    if (typeof option === 'string') return option;
+    if (option && option.id) return String(option.id);
+    if (option && option.value) return String(option.value);
+    if (option && option.name) return String(option.name);
+    return '';
+  }).filter(Boolean);
 }
 
 function getOrder(payload) {

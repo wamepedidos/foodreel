@@ -156,6 +156,24 @@ function StaffOrderItem({ item, orderId }: { item: OrderRecord['items'][number];
     <div className="flex items-start justify-between gap-3 rounded-2xl bg-surface px-3 py-2" key={`${orderId}-${item.dishId}`}>
       <div className="min-w-0">
         <p className="text-sm font-bold text-white">{item.name}</p>
+        {item.selectedOptions.length ? (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {item.selectedOptions.map((option) => (
+              <span className="rounded-full bg-accent/10 px-2 py-1 text-[11px] font-bold text-accent" key={`${orderId}-${item.dishId}-option-${option.value}`}>
+                Sin {option.value}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        {item.selectedExtras.length ? (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {item.selectedExtras.map((extra) => (
+              <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-bold text-white/80" key={`${orderId}-${item.dishId}-extra-${extra.value}`}>
+                {extra.name} + {formatCurrency(extra.price ?? 0)}
+              </span>
+            ))}
+          </div>
+        ) : null}
         {item.notes ? <p className="mt-1 text-xs text-muted">{item.notes}</p> : null}
       </div>
       <p className="shrink-0 text-sm font-black text-accent">x{item.quantity}</p>

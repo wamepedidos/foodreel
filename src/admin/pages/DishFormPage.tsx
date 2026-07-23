@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import type { AdminDish, DishMediaItem, Sauce } from '../adminTypes';
+import type { AdminDish, DishAddition, DishMediaItem, Sauce } from '../adminTypes';
 import { getInteractionRate } from '../components/DashboardComponents';
 import { createDish, getAdminDishes, getDishesSnapshot, updateDish, uploadDishMedia } from '../../services/dishesService';
 import { restaurantConfig } from '../../config/restaurant';
@@ -74,6 +74,8 @@ function blankDish(): AdminDish {
     isVegetarian: false,
     isGlutenFree: false,
     sauces: [],
+    additions: [],
+    removableIngredients: [],
     sauceSelectionRequired: false,
     minimumSauces: 0,
     maximumSauces: 1,
@@ -103,7 +105,9 @@ function normalizeDishForm(dish: AdminDish): AdminDish {
     ...dish,
     gallery: Array.isArray(dish.gallery) ? dish.gallery : [],
     ingredients: Array.isArray(dish.ingredients) ? dish.ingredients : [],
-    sauces: Array.isArray(dish.sauces) ? dish.sauces : []
+    sauces: Array.isArray(dish.sauces) ? dish.sauces : [],
+    additions: Array.isArray(dish.additions) ? dish.additions : [],
+    removableIngredients: Array.isArray(dish.removableIngredients) && dish.removableIngredients.length ? dish.removableIngredients : dish.ingredients
   };
 }
 
@@ -262,6 +266,7 @@ export function DishFormPage() {
           <DishFeaturesSelector dish={dish} onChange={setDish} />
           <PreparationTimeFields dish={dish} errors={errors} onChange={setDish} />
           <IngredientManager dish={dish} onChange={setDish} />
+          <BasicOrderCustomizationManager dish={dish} onChange={setDish} />
           <AllergenSelector dish={dish} onChange={setDish} />
           {isEditing ? <DishPerformancePanel dish={dish} /> : null}
         </div>
@@ -714,6 +719,57 @@ export function IngredientManager({ dish, onChange }: { dish: AdminDish; onChang
         Observaciones alimentarias
         <textarea className="min-h-20 rounded-2xl border border-white/10 bg-base px-3 py-3 text-sm outline-none focus:border-accent" onChange={(event) => onChange({ ...dish, dietaryNotes: event.target.value })} value={dish.dietaryNotes} />
       </label>
+    </FormSection>
+  );
+}
+
+export function BasicOrderCustomizationManager({ dish, onChange }: { dish: AdminDish; onChange: (dish: AdminDish) => void }) {
+  const updateAddition = (additionId: string, patch: Partial<DishAddition>) => {
+    onChange({
+      ...dish,
+      additions: dish.additions.map((addition) => (addition.id === additionId ? { ...addition, ...patch } : addition))
+    });
+  };
+
+  return (
+    <FormSection title="Personalizacion basica del pedido">
+      <TagEditor
+        label="Ingredientes que el cliente puede quitar"
+        onChange={(items) => onChange({ ...dish, removableIngredients: items })}
+        value={dish.removableIngredients}
+      />
+      <div className="mt-4 grid gap-3">
+        {dish.additions.map((addition) => (
+          <div className="grid gap-2 rounded-2xl bg-base p-3 lg:grid-cols-[1fr_1fr_120px_auto]" key={addition.id}>
+            <input className="h-11 rounded-xl border border-white/10 bg-card px-3 text-sm outline-none focus:border-accent" onChange={(event) => updateAddition(addition.id, { name: event.target.value })} placeholder="Adicion" value={addition.name} />
+            <input className="h-11 rounded-xl border border-white/10 bg-card px-3 text-sm outline-none focus:border-accent" onChange={(event) => updateAddition(addition.id, { description: event.target.value })} placeholder="Descripcion" value={addition.description} />
+            <input className="h-11 rounded-xl border border-white/10 bg-card px-3 text-sm outline-none focus:border-accent" min={0} onChange={(event) => updateAddition(addition.id, { price: Number(event.target.value) })} type="number" value={addition.price} />
+            <div className="flex gap-2">
+              <Checkbox checked={addition.available} label="Disp." onChange={(checked) => updateAddition(addition.id, { available: checked })} />
+              <Checkbox checked={addition.defaultSelected} label="Def." onChange={(checked) => updateAddition(addition.id, { defaultSelected: checked })} />
+              <button className="grid size-11 place-items-center rounded-xl bg-red-500/10 text-red-200" onClick={() => onChange({ ...dish, additions: dish.additions.filter((item) => item.id !== addition.id) })} type="button">
+                <Trash2 className="size-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        className="mt-3 inline-flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-base px-4 text-sm font-black"
+        onClick={() =>
+          onChange({
+            ...dish,
+            additions: [
+              ...dish.additions,
+              { id: createId('addition'), name: '', description: '', price: 0, available: true, defaultSelected: false }
+            ]
+          })
+        }
+        type="button"
+      >
+        <Plus className="size-4" />
+        Agregar adicion
+      </button>
     </FormSection>
   );
 }

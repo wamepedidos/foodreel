@@ -16,7 +16,7 @@ const PENDING_IDEMPOTENCY_KEY = 'foodreel-pending-order-idempotency-key';
 const ACTIVE_ORDER_ID = 'foodreel-active-order-id';
 
 const orderStyles = {
-  shell: 'h-full overflow-y-auto px-3 pb-[112px] pt-[calc(14px+env(safe-area-inset-top))] sm:px-4',
+  shell: 'h-full overflow-y-auto px-3 pb-[112px] pt-3 sm:px-4',
   content: 'mx-auto flex max-w-[520px] flex-col gap-3',
   card: 'rounded-[22px] border border-white/10 bg-card p-4 shadow-2xl shadow-black/25',
   surfaceCard: 'rounded-[22px] border border-white/10 bg-surface p-3 shadow-2xl shadow-black/20',
@@ -43,14 +43,20 @@ function compactList(items: unknown) {
   return Array.isArray(items) ? items.map(String).map((item) => item.trim()).filter(Boolean) : [];
 }
 
+function getItemUnitPrice(item: { price: number; selectedAdditions?: { price: number }[] }) {
+  return item.price + (item.selectedAdditions ?? []).reduce((total, addition) => total + Number(addition.price || 0), 0);
+}
+
 export function OrderPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const items = useCartStore((state) => state.items);
-  const selectedDishId = useCartStore((state) => state.selectedDishId);
+  const selectedCartItemId = useCartStore((state) => state.selectedCartItemId);
   const selectDish = useCartStore((state) => state.selectDish);
   const increment = useCartStore((state) => state.increment);
   const decrement = useCartStore((state) => state.decrement);
+  const toggleRemovedIngredient = useCartStore((state) => state.toggleRemovedIngredient);
+  const toggleAddition = useCartStore((state) => state.toggleAddition);
   const clearCart = useCartStore((state) => state.clearCart);
   const [customerNotes, setCustomerNotes] = useState('');
   const [sending, setSending] = useState(false);
@@ -71,7 +77,7 @@ export function OrderPage() {
     () => getOrCreateTableSessionId(restaurantConfig.restaurantId, restaurantConfig.tableId),
     []
   );
-  const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
+  const subtotal = items.reduce((total, item) => total + getItemUnitPrice(item) * item.quantity, 0);
   const total = subtotal;
 
   useEffect(() => {
@@ -126,10 +132,17 @@ export function OrderPage() {
         name: item.name,
         notes: '',
         quantity: item.quantity,
-        selectedExtras: [],
-        selectedOptions: [],
-        subtotal: item.price * item.quantity,
-        unitPrice: item.price
+        selectedExtras: item.selectedAdditions.map((addition) => ({
+          name: addition.name,
+          price: addition.price,
+          value: addition.name
+        })),
+        selectedOptions: item.removedIngredients.map((ingredient) => ({
+          name: 'Sin ingrediente',
+          value: ingredient
+        })),
+        subtotal: getItemUnitPrice(item) * item.quantity,
+        unitPrice: getItemUnitPrice(item)
       })),
       subtotal,
       upsellTotal: 0,
@@ -205,24 +218,27 @@ export function OrderPage() {
 
             <div className="space-y-2.5">
               {items.map((item) => {
-                const selected = (selectedDishId ?? items[items.length - 1]?.dishId) === item.dishId;
+                const selected = (selectedCartItemId ?? items[items.length - 1]?.cartItemId) === item.cartItemId;
                 const ingredients = compactList(item.ingredients);
+                const removableIngredients = compactList(item.removableIngredients);
+                const additions = item.additions.filter((addition) => addition.available);
+                const unitPrice = getItemUnitPrice(item);
                 return (
                   <article
                     className={`flex cursor-pointer gap-3 rounded-[22px] border p-3 transition ${
                       selected ? 'border-accent/60 bg-accent/10 shadow-[0_18px_42px_rgb(var(--color-primary-rgb)/0.12)]' : 'border-white/10 bg-surface'
                     }`}
-                    key={item.dishId}
-                    onClick={() => selectDish(item.dishId)}
+                    key={item.cartItemId}
+                    onClick={() => selectDish(item.cartItemId)}
                   >
                     <img alt="" className="size-[76px] shrink-0 rounded-2xl object-cover" src={item.image} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <p className={`line-clamp-2 ${orderStyles.itemTitle}`}>{item.name}</p>
-                        <p className={`shrink-0 ${orderStyles.itemPrice}`}>{formatCurrency(item.price * item.quantity)}</p>
+                        <p className={`shrink-0 ${orderStyles.itemPrice}`}>{formatCurrency(unitPrice * item.quantity)}</p>
                       </div>
                       <p className={`mt-1 ${orderStyles.meta}`}>
-                        {formatCurrency(item.price)}
+                        {formatCurrency(unitPrice)}
                         {selected ? ' - seleccionado para publicar' : ''}
                       </p>
                       {ingredients.length ? (
@@ -237,6 +253,60 @@ export function OrderPage() {
                           </div>
                         </div>
                       ) : null}
+                      {removableIngredients.length ? (
+                        <div className="mt-3 grid gap-1.5 rounded-2xl bg-black/20 p-2.5">
+                          <p className={orderStyles.detailLabel}>Quitar ingredientes</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {removableIngredients.map((ingredient) => {
+                              const removed = item.removedIngredients.includes(ingredient);
+                              return (
+                                <button
+                                  className={`inline-flex h-8 items-center rounded-full border px-3 text-[11px] font-bold leading-none transition ${
+                                    removed
+                                      ? 'border-accent bg-accent text-white'
+                                      : 'border-white/10 bg-black/20 text-white/72 hover:border-accent/50'
+                                  }`}
+                                  key={`${item.cartItemId}-remove-${ingredient}`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    toggleRemovedIngredient(item.cartItemId, ingredient);
+                                  }}
+                                  type="button"
+                                >
+                                  Sin {ingredient}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
+                      {additions.length ? (
+                        <div className="mt-3 grid gap-1.5 rounded-2xl bg-black/20 p-2.5">
+                          <p className={orderStyles.detailLabel}>Adiciones</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {additions.map((addition) => {
+                              const active = item.selectedAdditions.some((selectedAddition) => selectedAddition.id === addition.id);
+                              return (
+                                <button
+                                  className={`inline-flex h-8 items-center rounded-full border px-3 text-[11px] font-bold leading-none transition ${
+                                    active
+                                      ? 'border-accent bg-accent text-white'
+                                      : 'border-white/10 bg-black/20 text-white/72 hover:border-accent/50'
+                                  }`}
+                                  key={`${item.cartItemId}-addition-${addition.id}`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    toggleAddition(item.cartItemId, addition);
+                                  }}
+                                  type="button"
+                                >
+                                  {addition.name} + {formatCurrency(addition.price)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
                       <div className="mt-3 flex items-center justify-between gap-2">
                         <div className="flex h-10 items-center rounded-2xl bg-accent px-1 text-white shadow-[0_14px_36px_rgba(252,45,4,0.24)]">
                           <button
@@ -244,7 +314,7 @@ export function OrderPage() {
                             className="grid size-8 place-items-center rounded-full bg-black/20 text-white transition hover:bg-black/30"
                             onClick={(event) => {
                               event.stopPropagation();
-                              decrement(item.dishId);
+                              decrement(item.cartItemId);
                             }}
                             type="button"
                           >
@@ -256,7 +326,7 @@ export function OrderPage() {
                             className="grid size-8 place-items-center rounded-full bg-black/20 text-white transition hover:bg-black/30"
                             onClick={(event) => {
                               event.stopPropagation();
-                              increment(item.dishId);
+                              increment(item.cartItemId);
                             }}
                             type="button"
                           >
@@ -362,6 +432,24 @@ function ActiveOrderReceipt({ order, onCreateAnother }: { order: OrderRecord; on
               </div>
               <p className={`shrink-0 ${orderStyles.itemPrice}`}>{formatCurrency(item.subtotal)}</p>
             </div>
+            {item.selectedOptions.length ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {item.selectedOptions.map((option) => (
+                  <span className={orderStyles.detailChip} key={`${order.id}-${item.dishId}-option-${option.value}`}>
+                    Sin {option.value}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            {item.selectedExtras.length ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {item.selectedExtras.map((extra) => (
+                  <span className={orderStyles.detailChip} key={`${order.id}-${item.dishId}-extra-${extra.value}`}>
+                    {extra.name} + {formatCurrency(extra.price ?? 0)}
+                  </span>
+                ))}
+              </div>
+            ) : null}
             {item.notes ? <p className={`mt-2 ${orderStyles.meta}`}>Nota: {item.notes}</p> : null}
           </article>
         ))}

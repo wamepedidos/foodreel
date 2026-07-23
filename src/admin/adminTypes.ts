@@ -10,6 +10,15 @@ export type Sauce = {
   imageUrl: string;
 };
 
+export type DishAddition = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  available: boolean;
+  defaultSelected: boolean;
+};
+
 export type DishMediaItem = {
   id: string;
   url: string;
@@ -37,6 +46,8 @@ export type AdminDish = {
   isVegetarian: boolean;
   isGlutenFree: boolean;
   sauces: Sauce[];
+  additions: DishAddition[];
+  removableIngredients: string[];
   sauceSelectionRequired: boolean;
   minimumSauces: number;
   maximumSauces: number;

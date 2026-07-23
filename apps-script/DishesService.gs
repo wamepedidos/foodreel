@@ -54,6 +54,7 @@ function createDish(payload, context) {
   record.updatedAt = timestamp;
   appendRecord('DISHES', record);
   saveSaucesForDish(record.id, payload.sauces || [], record.restaurantId);
+  saveAdditionsForDish(record.id, payload.additions || [], record.restaurantId);
   invalidateMenu(record.restaurantId);
   audit('createDish', 'dish', record.id, null, record, context);
   return dishToAdmin(record);
@@ -68,6 +69,7 @@ function updateDish(payload, context) {
   record.updatedAt = nowIso();
   var updated = updateRecord('DISHES', payload.dishId, record);
   saveSaucesForDish(payload.dishId, payload.dish.sauces || [], updated.restaurantId);
+  saveAdditionsForDish(payload.dishId, payload.dish.additions || [], updated.restaurantId);
   invalidateMenu(updated.restaurantId);
   audit('updateDish', 'dish', updated.id, previous, updated, context);
   return dishToAdmin(updated);
@@ -122,6 +124,7 @@ function dishFromFrontend(input, createdAt) {
     isGlutenFree: Boolean(input.isGlutenFree),
     featuresJson: safeJson(input.features || []),
     ingredientsJson: safeJson(input.ingredients || []),
+    removableIngredientsJson: safeJson(input.removableIngredients || input.ingredients || []),
     allergensJson: safeJson(input.allergens || []),
     crossContaminationWarning: input.crossContaminationWarning || '',
     preparationTimeMin: input.preparationTimeMin === '' ? '' : toNumber(input.preparationTimeMin),
@@ -152,6 +155,8 @@ function dishToPublic(row) {
       image: row.mainImageUrl || row.videoThumbnailUrl,
       video: row.videoUrl || undefined,
       ingredients: parseJson(row.ingredientsJson, []),
+      removableIngredients: parseJson(row.removableIngredientsJson, parseJson(row.ingredientsJson, [])),
+      additions: findManyBy('ADDITIONS', 'dishId', row.id).filter(function(addition) { return toBool(addition.available); }).map(additionToFrontend),
       sauces: findManyBy('SAUCES', 'dishId', row.id).filter(function(sauce) { return toBool(sauce.available); }).map(sauceToFrontend),
       sauceSelectionRequired: toBool(row.sauceSelectionRequired),
       minimumSauces: toNumber(row.minimumSauces),
@@ -183,9 +188,11 @@ function dishToAdmin(row) {
       return { id: item.id, url: item.fileUrl, type: item.type, name: item.fileName };
     }),
     sauces: findManyBy('SAUCES', 'dishId', row.id).map(sauceToFrontend),
+    additions: findManyBy('ADDITIONS', 'dishId', row.id).map(additionToFrontend),
     servingSizes: parseJson(row.servingSizesJson, []),
     features: parseJson(row.featuresJson, []),
     ingredients: parseJson(row.ingredientsJson, []),
+    removableIngredients: parseJson(row.removableIngredientsJson, parseJson(row.ingredientsJson, [])),
     allergens: parseJson(row.allergensJson, []),
     price: dish.price,
     spicyLevel: toNumber(row.spicyLevel),
@@ -234,6 +241,28 @@ function saveSaucesForDish(dishId, sauces, restaurantId) {
   });
 }
 
+function saveAdditionsForDish(dishId, additions, restaurantId) {
+  additions.forEach(function(addition, index) {
+    if (!addition.name) return;
+    var existing = addition.id ? findById('ADDITIONS', addition.id) : null;
+    var record = {
+      id: existing ? existing.id : makeId('addition'),
+      restaurantId: restaurantId,
+      dishId: dishId,
+      name: addition.name,
+      description: addition.description || '',
+      price: toNumber(addition.price),
+      available: Boolean(addition.available),
+      defaultSelected: Boolean(addition.defaultSelected),
+      sortOrder: index + 1,
+      createdAt: existing ? existing.createdAt : nowIso(),
+      updatedAt: nowIso()
+    };
+    if (existing) updateRecord('ADDITIONS', existing.id, record);
+    else appendRecord('ADDITIONS', record);
+  });
+}
+
 function sauceToFrontend(row) {
   return {
     id: row.id,
@@ -243,5 +272,16 @@ function sauceToFrontend(row) {
     available: toBool(row.available),
     defaultSelected: toBool(row.defaultSelected),
     imageUrl: row.imageUrl
+  };
+}
+
+function additionToFrontend(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    price: toNumber(row.price),
+    available: toBool(row.available),
+    defaultSelected: toBool(row.defaultSelected)
   };
 }

@@ -77,6 +77,25 @@ function toSeedDish(index: number): AdminDish {
         imageUrl: ''
       }
     ],
+    additions: [
+      {
+        id: createId('addition'),
+        name: 'Tocineta',
+        description: 'Extra crujiente',
+        price: 4500,
+        available: true,
+        defaultSelected: false
+      },
+      {
+        id: createId('addition'),
+        name: 'Queso',
+        description: 'Porcion adicional',
+        price: 3500,
+        available: true,
+        defaultSelected: false
+      }
+    ],
+    removableIngredients: dish.ingredients,
     sauceSelectionRequired: false,
     minimumSauces: 0,
     maximumSauces: 2,
@@ -121,6 +140,8 @@ export function adminDishToDish(dish: AdminDish): Dish {
     id: dish.id,
     image: dish.mainImageUrl || dish.videoThumbnailUrl || '/brand/foodreel-logo.png',
     ingredients,
+    additions: Array.isArray(dish.additions) ? dish.additions.filter((addition) => addition.available) : [],
+    removableIngredients: normalizeStringArray(dish.removableIngredients).length ? normalizeStringArray(dish.removableIngredients) : ingredients,
     allergens,
     crossContaminationWarning: dish.crossContaminationWarning,
     dietaryNotes: dish.dietaryNotes,
@@ -473,6 +494,8 @@ function normalizeDish(dish: AdminDish): AdminDish {
     ...dish,
     restaurantId: dish.restaurantId || restaurantConfig.restaurantId,
     servingSizes: dish.servingSizes.map(Number).filter((item) => Number.isFinite(item)),
+    additions: Array.isArray(dish.additions) ? dish.additions : [],
+    removableIngredients: normalizeStringArray(dish.removableIngredients).length ? normalizeStringArray(dish.removableIngredients) : normalizeStringArray(dish.ingredients),
     preparationTimeMin: normalizePreparationTime(dish.preparationTimeMin),
     preparationTimeMax: normalizePreparationTime(dish.preparationTimeMax)
   };
@@ -497,6 +520,15 @@ function dishToAdminDish(dish: Dish): AdminDish {
     gallery: [],
     id: dish.id,
     ingredients: dish.ingredients,
+    additions: (dish.additions ?? []).map((addition) => ({
+      id: addition.id,
+      name: addition.name,
+      description: addition.description ?? '',
+      price: addition.price,
+      available: addition.available,
+      defaultSelected: addition.defaultSelected ?? false
+    })),
+    removableIngredients: dish.removableIngredients ?? dish.ingredients,
     isGlutenFree: dish.isGlutenFree ?? false,
     isVegan: dish.isVegan ?? false,
     isVegetarian: dish.isVegetarian ?? false,
