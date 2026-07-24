@@ -2,14 +2,12 @@ import {
   Bike,
   CheckCircle2,
   ChevronDown,
-  ClipboardList,
   Clock3,
   Eye,
   MapPin,
   Minus,
   Pencil,
   Plus,
-  Radio,
   SendHorizonal,
   Utensils
 } from 'lucide-react';
@@ -64,13 +62,6 @@ function getItemUnitPrice(item: { price: number; selectedAdditions?: { price: nu
 
 function compactAdditions(items: unknown): DishAddition[] {
   return Array.isArray(items) ? (items as DishAddition[]) : [];
-}
-
-function formatOrderAge(createdAt?: string) {
-  if (!createdAt) return 'Creado ahora';
-  const minutes = Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000));
-  if (minutes < 1) return 'Creado ahora';
-  return `Creado hace ${minutes} min`;
 }
 
 function DeliveryAddressCard() {
@@ -157,7 +148,6 @@ export function OrderPage() {
   const subtotal = items.reduce((total, item) => total + getItemUnitPrice(item) * item.quantity, 0);
   const deliveryFee = orderType === 'delivery' ? DELIVERY_FEE : 0;
   const total = subtotal + deliveryFee;
-  const visibleOrderNumber = activeOrder?.orderNumber ?? 1;
 
   useEffect(() => {
     if (!activeOrderId) return undefined;
@@ -258,22 +248,6 @@ export function OrderPage() {
   return (
     <div className={orderStyles.shell}>
       <div className={orderStyles.content}>
-        <section className={`flex items-center justify-between gap-3 p-4 ${orderStyles.card}`}>
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent/10 text-accent">
-              <ClipboardList className="size-6" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-lg font-black leading-6">Pedido #{visibleOrderNumber}</p>
-              <p className={orderStyles.body}>{activeOrder ? formatOrderAge(activeOrder.createdAt) : 'Creado ahora'}</p>
-            </div>
-          </div>
-          <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#e9f8e8] px-3 text-xs font-black text-[#14942d]">
-            <Radio className="size-3.5" />
-            En vivo
-          </span>
-        </section>
-
         <section className={`grid gap-3 p-4 ${orderStyles.softCard}`}>
           <div className="min-w-0">
             <p className={orderStyles.label}>Servicio</p>
