@@ -4,6 +4,7 @@ import {
   ChevronDown,
   Clock3,
   Eye,
+  LocateFixed,
   MapPin,
   Minus,
   Pencil,
@@ -11,7 +12,7 @@ import {
   SendHorizonal,
   Utensils
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { restaurantConfig } from '../config/restaurant';
 import { ORDER_STATUS_LABELS } from '../orders/orderStatus';
@@ -46,6 +47,12 @@ type DeliveryQuote = {
   message?: string;
   status: 'idle' | 'loading' | 'ready' | 'error';
   trafficLabel?: string;
+};
+
+type DeliverySuggestion = {
+  coordinates: DeliveryCoordinates;
+  displayName: string;
+  id: string;
 };
 
 const orderStyles = {
@@ -86,9 +93,14 @@ function readStoredDeliveryAddress() {
   try {
     const stored = window.localStorage.getItem(DELIVERY_ADDRESS_STORAGE_KEY);
     if (!stored) return { address: '', reference: '' };
-    const parsed = JSON.parse(stored) as { address?: unknown; reference?: unknown };
+    const parsed = JSON.parse(stored) as { address?: unknown; coordinates?: unknown; reference?: unknown };
+    const coordinates = parsed.coordinates as Partial<DeliveryCoordinates> | undefined;
     return {
       address: typeof parsed.address === 'string' ? parsed.address : '',
+      coordinates:
+        typeof coordinates?.lat === 'number' && typeof coordinates.lon === 'number'
+          ? { lat: coordinates.lat, lon: coordinates.lon }
+          : undefined,
       reference: typeof parsed.reference === 'string' ? parsed.reference : ''
     };
   } catch {
@@ -96,11 +108,11 @@ function readStoredDeliveryAddress() {
   }
 }
 
-function persistDeliveryAddress(address: string, reference: string) {
+function persistDeliveryAddress(address: string, reference: string, coordinates?: DeliveryCoordinates) {
   if (typeof window === 'undefined') return;
 
   try {
-    window.localStorage.setItem(DELIVERY_ADDRESS_STORAGE_KEY, JSON.stringify({ address, reference }));
+    window.localStorage.setItem(DELIVERY_ADDRESS_STORAGE_KEY, JSON.stringify({ address, coordinates, reference }));
   } catch {
     // The address still works for the current order when storage is unavailable.
   }
@@ -147,13 +159,13 @@ function formatDuration(durationMin?: number) {
   return typeof durationMin === 'number' ? `${Math.max(1, Math.round(durationMin))} min` : '--';
 }
 
-async function geocodeDeliveryAddress(address: string, signal: AbortSignal) {
+async function searchDeliveryAddresses(address: string, signal: AbortSignal): Promise<DeliverySuggestion[]> {
   const query = address.toLowerCase().includes('colombia') ? address : `${address}, Colombia`;
   const params = new URLSearchParams({
     addressdetails: '1',
     countrycodes: 'co',
     format: 'jsonv2',
-    limit: '1',
+    limit: '5',
     q: query
   });
   const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
@@ -165,19 +177,53 @@ async function geocodeDeliveryAddress(address: string, signal: AbortSignal) {
     throw new Error('No pudimos validar la direccion.');
   }
 
-  const results = (await response.json()) as Array<{ display_name?: string; lat: string; lon: string }>;
-  const match = results[0];
-  if (!match) {
+  const results = (await response.json()) as Array<{ display_name?: string; lat: string; lon: string; osm_id?: number; place_id?: number }>;
+  if (!results.length) {
     throw new Error('No encontramos esa direccion. Intenta con barrio, ciudad y nomenclatura.');
   }
 
-  return {
+  return results.map((match, index) => ({
     coordinates: {
       lat: Number(match.lat),
       lon: Number(match.lon)
     },
-    displayName: match.display_name
-  };
+    displayName: match.display_name ?? address,
+    id: String(match.place_id ?? match.osm_id ?? `${match.lat}-${match.lon}-${index}`)
+  }));
+}
+
+async function reverseGeocodeCoordinates(coordinates: DeliveryCoordinates, signal: AbortSignal) {
+  const params = new URLSearchParams({
+    format: 'jsonv2',
+    lat: String(coordinates.lat),
+    lon: String(coordinates.lon)
+  });
+  const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
+    headers: { Accept: 'application/json', 'Accept-Language': 'es-CO,es;q=0.9' },
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error('Tomamos tu ubicacion, pero no pudimos convertirla en direccion.');
+  }
+
+  const result = (await response.json()) as { display_name?: string };
+  return result.display_name;
+}
+
+function requestBrowserLocation() {
+  return new Promise<DeliveryCoordinates>((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Tu navegador no permite tomar la ubicacion por GPS.'));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => resolve({ lat: position.coords.latitude, lon: position.coords.longitude }),
+      () => reject(new Error('No pudimos tomar tu ubicacion. Puedes escribir la direccion manualmente.')),
+      { enableHighAccuracy: true, maximumAge: 60000, timeout: 12000 }
+    );
+  });
 }
 
 async function calculateRoadRoute(destination: DeliveryCoordinates, signal: AbortSignal) {
@@ -210,9 +256,11 @@ async function calculateRoadRoute(destination: DeliveryCoordinates, signal: Abor
 }
 
 function ServiceTypeCard({
+  onSelectDelivery,
   orderType,
   setOrderType
 }: {
+  onSelectDelivery: () => void;
   orderType: 'restaurant' | 'delivery';
   setOrderType: (orderType: 'restaurant' | 'delivery') => void;
 }) {
@@ -233,7 +281,7 @@ function ServiceTypeCard({
         </button>
         <button
           className={orderType === 'delivery' ? orderStyles.redPill : 'inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-[#eee9e5] bg-white px-3 text-[11px] font-bold text-[#505662]'}
-          onClick={() => setOrderType('delivery')}
+          onClick={onSelectDelivery}
           type="button"
         >
           <Bike className="size-4" />
@@ -246,16 +294,22 @@ function ServiceTypeCard({
 
 function DeliveryAddressCard({
   address,
+  onSelectSuggestion,
+  onUseCurrentLocation,
   quote,
   reference,
   setAddress,
-  setReference
+  setReference,
+  suggestions
 }: {
   address: string;
+  onSelectSuggestion: (suggestion: DeliverySuggestion) => void;
+  onUseCurrentLocation: () => void;
   quote: DeliveryQuote;
   reference: string;
   setAddress: (address: string) => void;
   setReference: (reference: string) => void;
+  suggestions: DeliverySuggestion[];
 }) {
   const mapUrl = createMapEmbedUrl(quote.coordinates);
 
@@ -263,7 +317,17 @@ function DeliveryAddressCard({
     <section className="mt-3 overflow-hidden rounded-2xl border border-[#eee9e5] bg-white p-3">
       <div className="mb-3 grid gap-3">
         <div className="min-w-0">
-          <p className={orderStyles.label}>Direccion de entrega</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className={orderStyles.label}>Direccion de entrega</p>
+            <button
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-2xl border border-[#eee9e5] bg-white px-3 text-[11px] font-black text-accent transition hover:border-accent/50"
+              onClick={onUseCurrentLocation}
+              type="button"
+            >
+              <LocateFixed className="size-3.5" />
+              Usar GPS
+            </button>
+          </div>
           <label className="mt-2 block">
             <span className="sr-only">Direccion de entrega</span>
             <input
@@ -273,6 +337,20 @@ function DeliveryAddressCard({
               value={address}
             />
           </label>
+          {suggestions.length ? (
+            <div className="mt-2 overflow-hidden rounded-2xl border border-[#eee9e5] bg-white">
+              {suggestions.map((suggestion) => (
+                <button
+                  className="block w-full border-b border-[#eee9e5] px-3 py-2 text-left text-xs font-bold leading-5 text-[#252832] last:border-b-0 hover:bg-[#f7f7f6]"
+                  key={suggestion.id}
+                  onClick={() => onSelectSuggestion(suggestion)}
+                  type="button"
+                >
+                  {suggestion.displayName}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <label className="mt-2 block">
             <span className="sr-only">Apartamento o referencia</span>
             <input
@@ -353,8 +431,20 @@ export function OrderPage() {
   const [orderType, setOrderType] = useState<'restaurant' | 'delivery'>('restaurant');
   const [deliveryAddress, setDeliveryAddress] = useState(() => readStoredDeliveryAddress().address);
   const [deliveryReference, setDeliveryReference] = useState(() => readStoredDeliveryAddress().reference);
-  const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote>({ status: 'idle' });
+  const [deliverySuggestions, setDeliverySuggestions] = useState<DeliverySuggestion[]>([]);
+  const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote>(() => {
+    const stored = readStoredDeliveryAddress();
+    return stored.coordinates
+      ? {
+          coordinates: stored.coordinates,
+          displayName: stored.address,
+          message: 'Direccion guardada. Verificando costo de envio...',
+          status: 'idle'
+        }
+      : { status: 'idle' };
+  });
   const [activeOrder, setActiveOrder] = useState<OrderRecord | null>(null);
+  const resolvedDeliveryAddressRef = useRef('');
   const [activeOrderId, setActiveOrderId] = useState(() => window.localStorage.getItem(ACTIVE_ORDER_ID) ?? '');
   const [idempotencyKey, setIdempotencyKey] = useState(() => {
     const existing = window.localStorage.getItem(PENDING_IDEMPOTENCY_KEY);
@@ -374,11 +464,12 @@ export function OrderPage() {
   const total = subtotal + deliveryFee;
 
   useEffect(() => {
-    persistDeliveryAddress(deliveryAddress, deliveryReference);
-  }, [deliveryAddress, deliveryReference]);
+    persistDeliveryAddress(deliveryAddress, deliveryReference, deliveryQuote.coordinates);
+  }, [deliveryAddress, deliveryQuote.coordinates, deliveryReference]);
 
   useEffect(() => {
     if (orderType !== 'delivery') {
+      setDeliverySuggestions([]);
       return undefined;
     }
 
@@ -388,6 +479,11 @@ export function OrderPage() {
         status: 'idle',
         message: 'Escribe una direccion completa para calcular distancia, tiempo y costo.'
       });
+      setDeliverySuggestions([]);
+      return undefined;
+    }
+
+    if (trimmedAddress === resolvedDeliveryAddressRef.current && deliveryQuote.coordinates) {
       return undefined;
     }
 
@@ -399,14 +495,18 @@ export function OrderPage() {
         status: 'loading'
       }));
 
-      void geocodeDeliveryAddress(trimmedAddress, controller.signal)
-        .then(async (geocoded) => {
-          const route = await calculateRoadRoute(geocoded.coordinates, controller.signal);
+      void searchDeliveryAddresses(trimmedAddress, controller.signal)
+        .then(async (suggestions) => {
+          if (controller.signal.aborted) return;
+          setDeliverySuggestions(suggestions);
+          const selectedSuggestion = suggestions[0];
+          const route = await calculateRoadRoute(selectedSuggestion.coordinates, controller.signal);
           if (controller.signal.aborted) return;
 
+          resolvedDeliveryAddressRef.current = trimmedAddress;
           setDeliveryQuote({
-            coordinates: geocoded.coordinates,
-            displayName: geocoded.displayName,
+            coordinates: selectedSuggestion.coordinates,
+            displayName: selectedSuggestion.displayName,
             distanceKm: route.distanceKm,
             durationMin: route.durationMin,
             fee: route.fee,
@@ -416,6 +516,7 @@ export function OrderPage() {
         })
         .catch((caughtError) => {
           if (controller.signal.aborted) return;
+          setDeliverySuggestions([]);
           setDeliveryQuote({
             message: caughtError instanceof Error ? caughtError.message : 'No pudimos calcular el domicilio.',
             status: 'error'
@@ -427,7 +528,76 @@ export function OrderPage() {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [deliveryAddress, orderType]);
+  }, [deliveryAddress, deliveryQuote.coordinates, orderType]);
+
+  const calculateQuoteForLocation = async (coordinates: DeliveryCoordinates, displayName: string, signal?: AbortSignal) => {
+    const route = await calculateRoadRoute(coordinates, signal ?? new AbortController().signal);
+    setDeliveryQuote({
+      coordinates,
+      displayName,
+      distanceKm: route.distanceKm,
+      durationMin: route.durationMin,
+      fee: route.fee,
+      status: 'ready',
+      trafficLabel: route.trafficLabel
+    });
+  };
+
+  const selectDeliverySuggestion = (suggestion: DeliverySuggestion) => {
+    resolvedDeliveryAddressRef.current = suggestion.displayName;
+    setDeliveryAddress(suggestion.displayName);
+    setDeliverySuggestions([]);
+    setDeliveryQuote((current) => ({ ...current, coordinates: suggestion.coordinates, displayName: suggestion.displayName, status: 'loading' }));
+    void calculateQuoteForLocation(suggestion.coordinates, suggestion.displayName).catch((caughtError) => {
+      setDeliveryQuote({
+        message: caughtError instanceof Error ? caughtError.message : 'No pudimos calcular el domicilio.',
+        status: 'error'
+      });
+    });
+  };
+
+  const updateDeliveryAddress = (address: string) => {
+    resolvedDeliveryAddressRef.current = '';
+    setDeliveryAddress(address);
+    setDeliverySuggestions([]);
+    setDeliveryQuote({
+      message:
+        address.trim().length >= 8
+          ? 'Buscando coincidencias mientras escribes...'
+          : 'Escribe una direccion completa para calcular distancia, tiempo y costo.',
+      status: address.trim().length >= 8 ? 'loading' : 'idle'
+    });
+  };
+
+  const selectDeliveryMode = () => {
+    const previousQuote = deliveryQuote;
+    setOrderType('delivery');
+    setError('');
+
+    setDeliveryQuote((current) => ({
+      ...current,
+      message: 'Permite la ubicacion para calcular tu domicilio por GPS.',
+      status: 'loading'
+    }));
+
+    void requestBrowserLocation()
+      .then(async (coordinates) => {
+        const controller = new AbortController();
+        const displayName = (await reverseGeocodeCoordinates(coordinates, controller.signal).catch(() => undefined)) ?? 'Ubicacion actual del cliente';
+        resolvedDeliveryAddressRef.current = displayName;
+        setDeliveryAddress(displayName);
+        setDeliverySuggestions([]);
+        await calculateQuoteForLocation(coordinates, displayName, controller.signal);
+      })
+      .catch((caughtError) => {
+        const message = caughtError instanceof Error ? caughtError.message : 'No pudimos tomar tu ubicacion por GPS.';
+        setDeliveryQuote({
+          ...previousQuote,
+          message,
+          status: previousQuote.status === 'ready' ? 'ready' : 'idle'
+        });
+      });
+  };
 
   useEffect(() => {
     if (!activeOrderId) return undefined;
@@ -703,15 +873,18 @@ export function OrderPage() {
               />
             </label>
 
-            <ServiceTypeCard orderType={orderType} setOrderType={setOrderType} />
+            <ServiceTypeCard onSelectDelivery={selectDeliveryMode} orderType={orderType} setOrderType={setOrderType} />
 
             {orderType === 'delivery' ? (
               <DeliveryAddressCard
                 address={deliveryAddress}
+                onSelectSuggestion={selectDeliverySuggestion}
+                onUseCurrentLocation={selectDeliveryMode}
                 quote={deliveryQuote}
                 reference={deliveryReference}
-                setAddress={setDeliveryAddress}
+                setAddress={updateDeliveryAddress}
                 setReference={setDeliveryReference}
+                suggestions={deliverySuggestions}
               />
             ) : null}
 
