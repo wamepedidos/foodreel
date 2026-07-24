@@ -435,17 +435,41 @@ function DeliveryAddressCard({
             />
           </label>
           {suggestions.length ? (
-            <div className="mt-2 overflow-hidden rounded-2xl border border-[#eee9e5] bg-white">
-              {suggestions.map((suggestion) => (
-                <button
-                  className="block w-full border-b border-[#eee9e5] px-3 py-2 text-left text-xs font-bold leading-5 text-[#252832] last:border-b-0 hover:bg-[#f7f7f6]"
-                  key={suggestion.id}
-                  onClick={() => onSelectSuggestion(suggestion)}
-                  type="button"
-                >
-                  {suggestion.displayName}
-                </button>
-              ))}
+            <div className="mt-2 overflow-hidden rounded-[18px] border border-accent/15 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.08)]">
+              <div className="border-b border-[#eee9e5] bg-[#fff7f5] px-3 py-2">
+                <p className="text-[11px] font-black uppercase leading-4 tracking-[0.14em] text-accent">Resultados encontrados</p>
+              </div>
+              {suggestions.map((suggestion) => {
+                const [locationName, ...locationParts] = suggestion.displayName
+                  .split(',')
+                  .map((part) => part.trim())
+                  .filter(Boolean);
+                const locationDetail = locationParts.join(', ');
+
+                return (
+                  <button
+                    className="group grid w-full grid-cols-[38px_1fr] gap-3 border-b border-[#eee9e5] px-3 py-3 text-left last:border-b-0 hover:bg-[#fff7f5] focus-visible:bg-[#fff7f5] focus-visible:outline-none"
+                    key={suggestion.id}
+                    onClick={() => onSelectSuggestion(suggestion)}
+                    type="button"
+                  >
+                    <span className="grid size-9 place-items-center rounded-2xl bg-accent/10 text-accent transition group-hover:bg-accent group-hover:text-white">
+                      <MapPin className="size-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-black leading-5 text-[#252832]">
+                        {locationName ?? suggestion.displayName}
+                      </span>
+                      {locationDetail ? (
+                        <span className="mt-0.5 line-clamp-2 block text-[11px] font-medium leading-4 text-[#737987]">
+                          {locationDetail}
+                        </span>
+                      ) : null}
+                      <span className="mt-1 block text-[11px] font-black text-accent">Tocar para usar esta direccion</span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           ) : null}
           <label className="mt-2 block">
