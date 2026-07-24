@@ -35,10 +35,10 @@ const OSM_EMBED_URL =
   'https://www.openstreetmap.org/export/embed.html?bbox=-75.6220%2C6.1472%2C-75.6008%2C6.1598&layer=mapnik&marker=6.1535%2C-75.6112';
 
 const orderStyles = {
-  shell: 'h-full overflow-y-auto bg-[#f7f7f6] px-4 pb-[116px] pt-4 text-[#252832]',
+  shell: 'order-page-shell h-full overflow-y-auto bg-[#f7f7f6] px-4 pb-[116px] pt-4 text-[#252832]',
   content: 'mx-auto flex max-w-[520px] flex-col gap-3',
-  card: 'rounded-[18px] border border-[#e9e5e1] bg-white shadow-[0_18px_42px_rgba(15,23,42,0.06)]',
-  softCard: 'rounded-[18px] border border-[#eee9e5] bg-white shadow-[0_14px_36px_rgba(15,23,42,0.05)]',
+  card: 'order-white-card rounded-[18px] border border-[#e9e5e1] bg-white shadow-[0_18px_42px_rgba(15,23,42,0.06)]',
+  softCard: 'order-white-card rounded-[18px] border border-[#eee9e5] bg-white shadow-[0_14px_36px_rgba(15,23,42,0.05)]',
   eyebrow: 'text-[11px] font-black uppercase leading-none tracking-[0.16em] text-accent',
   title: 'text-2xl font-black leading-7 text-[#252832]',
   body: 'text-xs font-medium leading-5 text-[#737987]',

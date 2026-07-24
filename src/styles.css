@@ -382,3 +382,40 @@ textarea {
 .bottom-nav-shell .bottom-nav-active svg {
   color: rgb(var(--color-primary-rgb)) !important;
 }
+
+.order-page-frame,
+.order-page-frame main,
+.order-page-shell {
+  color-scheme: light;
+  background: #f7f7f6 !important;
+  color: #252832 !important;
+}
+
+.order-app-header,
+.order-page-shell .order-white-card,
+.order-page-shell [class*="bg-white"] {
+  background-color: #fff !important;
+  color: #252832 !important;
+}
+
+.order-page-shell .order-white-card,
+.order-page-shell [class*="border-[#eee9e5]"],
+.order-page-shell [class*="border-[#e9e5e1]"] {
+  border-color: #eee9e5 !important;
+}
+
+.order-page-shell [class*="bg-[#f7f7f6]"] {
+  background-color: #f7f7f6 !important;
+}
+
+.order-page-shell [class*="bg-[#f2f2f1]"],
+.order-page-shell [class*="bg-[#f3f3f2]"],
+.order-page-shell [class*="bg-[#fafafa]"] {
+  background-color: #f3f3f2 !important;
+  color: #505662 !important;
+}
+
+.order-page-shell [class*="bg-[#e9f8e8]"],
+.order-page-shell [class*="bg-[#eaf7ec]"] {
+  background-color: #e9f8e8 !important;
+}

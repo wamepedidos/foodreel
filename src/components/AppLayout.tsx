@@ -25,7 +25,7 @@ export function AppLayout({ children, restaurant }: { children: ReactNode; resta
       <div
         aria-label={`${restaurant.restaurantName} - Mesa ${restaurant.tableNumber}`}
         className={`relative mx-auto flex h-dvh w-full flex-col overflow-hidden shadow-2xl transition-[max-width] duration-300 ${
-          orderRoute ? 'bg-[#f7f7f6]' : 'bg-base'
+          orderRoute ? 'order-page-frame bg-[#f7f7f6]' : 'bg-base'
         } ${frameClass} ${maxWidthClass}`}
       >
         {immersiveMenu ? null : orderRoute ? <OrderHeader /> : <RestaurantHeader restaurant={restaurant} />}
@@ -41,7 +41,7 @@ function OrderHeader() {
   const navigate = useNavigate();
 
   return (
-    <header className="relative z-40 flex items-center justify-between border-b border-black/5 bg-white px-4 pb-3 pt-[calc(14px+env(safe-area-inset-top))] text-[#252832] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+    <header className="order-app-header relative z-40 flex items-center justify-between border-b border-black/5 bg-white px-4 pb-3 pt-[calc(14px+env(safe-area-inset-top))] text-[#252832] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
       <div className="flex min-w-0 items-center gap-3">
         <button
           aria-label="Volver al menu"
