@@ -26,11 +26,27 @@ import { useToast } from './Toast';
 
 const PENDING_IDEMPOTENCY_KEY = 'foodreel-pending-order-idempotency-key';
 const ACTIVE_ORDER_ID = 'foodreel-active-order-id';
-const DELIVERY_FEE = 3000;
-const DELIVERY_ADDRESS = 'Carrera 50 # 12 Sur - 45, Sabaneta, Antioquia';
-const DELIVERY_REFERENCE = 'Apartamento 302 - Referencia: Porteria azul';
-const OSM_EMBED_URL =
-  'https://www.openstreetmap.org/export/embed.html?bbox=-75.6220%2C6.1472%2C-75.6008%2C6.1598&layer=mapnik&marker=6.1535%2C-75.6112';
+const DELIVERY_ADDRESS_STORAGE_KEY = 'foodreel-delivery-address';
+const RESTAURANT_COORDINATES = {
+  lat: 6.155345424087648,
+  lon: -75.61113974978285
+};
+
+type DeliveryCoordinates = {
+  lat: number;
+  lon: number;
+};
+
+type DeliveryQuote = {
+  coordinates?: DeliveryCoordinates;
+  distanceKm?: number;
+  displayName?: string;
+  durationMin?: number;
+  fee?: number;
+  message?: string;
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  trafficLabel?: string;
+};
 
 const orderStyles = {
   shell: 'order-page-shell h-full overflow-y-auto bg-[#f7f7f6] px-4 pb-[116px] pt-4 text-[#252832]',
@@ -62,6 +78,135 @@ function getItemUnitPrice(item: { price: number; selectedAdditions?: { price: nu
 
 function compactAdditions(items: unknown): DishAddition[] {
   return Array.isArray(items) ? (items as DishAddition[]) : [];
+}
+
+function readStoredDeliveryAddress() {
+  if (typeof window === 'undefined') return { address: '', reference: '' };
+
+  try {
+    const stored = window.localStorage.getItem(DELIVERY_ADDRESS_STORAGE_KEY);
+    if (!stored) return { address: '', reference: '' };
+    const parsed = JSON.parse(stored) as { address?: unknown; reference?: unknown };
+    return {
+      address: typeof parsed.address === 'string' ? parsed.address : '',
+      reference: typeof parsed.reference === 'string' ? parsed.reference : ''
+    };
+  } catch {
+    return { address: '', reference: '' };
+  }
+}
+
+function persistDeliveryAddress(address: string, reference: string) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(DELIVERY_ADDRESS_STORAGE_KEY, JSON.stringify({ address, reference }));
+  } catch {
+    // The address still works for the current order when storage is unavailable.
+  }
+}
+
+function calculateDeliveryFee(distanceKm: number) {
+  if (distanceKm <= 2) return 5000;
+  if (distanceKm <= 4) return 6000;
+  if (distanceKm <= 6) return 7000;
+  if (distanceKm <= 8) return 8000;
+  if (distanceKm <= 10) return 9000;
+  return 9000 + Math.ceil(distanceKm - 10) * 1000;
+}
+
+function getTrafficEstimate(date = new Date()) {
+  const hour = date.getHours();
+  if ((hour >= 6 && hour < 9) || (hour >= 17 && hour < 20)) {
+    return { label: 'Trafico alto', multiplier: 1.35 };
+  }
+  if ((hour >= 11 && hour < 14) || (hour >= 15 && hour < 17)) {
+    return { label: 'Trafico medio', multiplier: 1.15 };
+  }
+  return { label: 'Trafico normal', multiplier: 1 };
+}
+
+function createMapEmbedUrl(coordinates?: DeliveryCoordinates) {
+  const marker = coordinates ?? RESTAURANT_COORDINATES;
+  const delta = coordinates ? 0.01 : 0.008;
+  const bbox = [
+    marker.lon - delta,
+    marker.lat - delta,
+    marker.lon + delta,
+    marker.lat + delta
+  ].join('%2C');
+
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${marker.lat}%2C${marker.lon}`;
+}
+
+function formatDistance(distanceKm?: number) {
+  return typeof distanceKm === 'number' ? `${distanceKm.toFixed(distanceKm >= 10 ? 0 : 1)} km` : '--';
+}
+
+function formatDuration(durationMin?: number) {
+  return typeof durationMin === 'number' ? `${Math.max(1, Math.round(durationMin))} min` : '--';
+}
+
+async function geocodeDeliveryAddress(address: string, signal: AbortSignal) {
+  const query = address.toLowerCase().includes('colombia') ? address : `${address}, Colombia`;
+  const params = new URLSearchParams({
+    addressdetails: '1',
+    countrycodes: 'co',
+    format: 'jsonv2',
+    limit: '1',
+    q: query
+  });
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+    headers: { Accept: 'application/json', 'Accept-Language': 'es-CO,es;q=0.9' },
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error('No pudimos validar la direccion.');
+  }
+
+  const results = (await response.json()) as Array<{ display_name?: string; lat: string; lon: string }>;
+  const match = results[0];
+  if (!match) {
+    throw new Error('No encontramos esa direccion. Intenta con barrio, ciudad y nomenclatura.');
+  }
+
+  return {
+    coordinates: {
+      lat: Number(match.lat),
+      lon: Number(match.lon)
+    },
+    displayName: match.display_name
+  };
+}
+
+async function calculateRoadRoute(destination: DeliveryCoordinates, signal: AbortSignal) {
+  const params = new URLSearchParams({
+    alternatives: 'false',
+    overview: 'false',
+    steps: 'false'
+  });
+  const coordinates = `${RESTAURANT_COORDINATES.lon},${RESTAURANT_COORDINATES.lat};${destination.lon},${destination.lat}`;
+  const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordinates}?${params.toString()}`, { signal });
+
+  if (!response.ok) {
+    throw new Error('No pudimos calcular la ruta del domicilio.');
+  }
+
+  const result = (await response.json()) as { routes?: Array<{ distance: number; duration: number }> };
+  const route = result.routes?.[0];
+  if (!route) {
+    throw new Error('No encontramos una ruta disponible para esa direccion.');
+  }
+
+  const distanceKm = route.distance / 1000;
+  const traffic = getTrafficEstimate();
+  return {
+    distanceKm,
+    durationMin: (route.duration / 60) * traffic.multiplier,
+    fee: calculateDeliveryFee(distanceKm),
+    trafficLabel: traffic.label
+  };
 }
 
 function ServiceTypeCard({
@@ -99,35 +244,73 @@ function ServiceTypeCard({
   );
 }
 
-function DeliveryAddressCard() {
+function DeliveryAddressCard({
+  address,
+  quote,
+  reference,
+  setAddress,
+  setReference
+}: {
+  address: string;
+  quote: DeliveryQuote;
+  reference: string;
+  setAddress: (address: string) => void;
+  setReference: (reference: string) => void;
+}) {
+  const mapUrl = createMapEmbedUrl(quote.coordinates);
+
   return (
     <section className="mt-3 overflow-hidden rounded-2xl border border-[#eee9e5] bg-white p-3">
-      <div className="mb-3 flex items-start justify-between gap-3">
+      <div className="mb-3 grid gap-3">
         <div className="min-w-0">
           <p className={orderStyles.label}>Direccion de entrega</p>
-          <div className="mt-2 flex items-start gap-2">
-            <MapPin className="mt-0.5 size-5 shrink-0 text-accent" />
-            <div className="min-w-0">
-              <p className="text-sm font-black leading-5 text-[#252832]">{DELIVERY_ADDRESS}</p>
-              <p className={orderStyles.body}>{DELIVERY_REFERENCE}</p>
+          <label className="mt-2 block">
+            <span className="sr-only">Direccion de entrega</span>
+            <input
+              className="h-11 w-full rounded-2xl border border-[#eee9e5] bg-white px-4 text-sm font-bold leading-5 text-[#252832] outline-none transition placeholder:text-[#9aa0aa] focus:border-accent/60 focus:ring-2 focus:ring-accent/10"
+              onChange={(event) => setAddress(event.target.value)}
+              placeholder="Ej: Carrera 50 # 12 Sur - 45, Sabaneta"
+              value={address}
+            />
+          </label>
+          <label className="mt-2 block">
+            <span className="sr-only">Apartamento o referencia</span>
+            <input
+              className="h-10 w-full rounded-2xl border border-[#eee9e5] bg-white px-4 text-xs font-medium leading-5 text-[#252832] outline-none transition placeholder:text-[#9aa0aa] focus:border-accent/60 focus:ring-2 focus:ring-accent/10"
+              onChange={(event) => setReference(event.target.value)}
+              placeholder="Apartamento, torre, referencia..."
+              value={reference}
+            />
+          </label>
+
+          {quote.status === 'ready' ? (
+            <div className="mt-3 flex items-start gap-2">
+              <MapPin className="mt-0.5 size-5 shrink-0 text-accent" />
+              <div className="min-w-0">
+                <p className="line-clamp-2 text-sm font-black leading-5 text-[#252832]">{quote.displayName ?? address}</p>
+                {reference ? <p className={orderStyles.body}>{reference}</p> : null}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mt-3 flex items-start gap-2">
+              <MapPin className="mt-0.5 size-5 shrink-0 text-accent" />
+              <div className="min-w-0">
+                <p className="text-sm font-black leading-5 text-[#252832]">
+                  {quote.status === 'loading' ? 'Calculando domicilio...' : 'Ingresa tu direccion para calcular el envio'}
+                </p>
+                {quote.message ? <p className={orderStyles.body}>{quote.message}</p> : null}
+              </div>
+            </div>
+          )}
         </div>
-        <button
-          className="inline-flex h-9 items-center gap-2 rounded-2xl border border-[#eee9e5] bg-white px-3 text-xs font-bold text-[#505662] transition hover:border-accent/40 hover:text-accent"
-          type="button"
-        >
-          <Pencil className="size-4" />
-          Editar
-        </button>
       </div>
 
-      <div className="relative h-[132px] overflow-hidden rounded-2xl border border-[#eee9e5] bg-[#eef0eb]">
+      <div className="relative h-[230px] overflow-hidden rounded-2xl border border-[#eee9e5] bg-[#eef0eb]">
         <iframe
           className="absolute inset-0 h-full w-full border-0"
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
-          src={OSM_EMBED_URL}
+          src={mapUrl}
           title="Mapa de direccion de entrega en OpenStreetMap"
         />
       </div>
@@ -136,13 +319,16 @@ function DeliveryAddressCard() {
         <div className="flex min-w-0 items-center gap-3">
           <Bike className="size-5 shrink-0 text-[#505662]" />
           <div>
-            <p className="text-xs font-medium text-[#737987]">Tiempo estimado de entrega</p>
-            <p className="text-sm font-black text-[#252832]">30 - 40 min</p>
+            <p className="text-xs font-medium text-[#737987]">Distancia y tiempo estimado</p>
+            <p className="text-sm font-black text-[#252832]">
+              {formatDistance(quote.distanceKm)} - {formatDuration(quote.durationMin)}
+            </p>
+            {quote.trafficLabel ? <p className="text-[11px] font-bold text-[#737987]">{quote.trafficLabel}</p> : null}
           </div>
         </div>
         <div className="text-right">
           <p className="text-xs font-medium text-[#737987]">Costo de envio</p>
-          <p className="text-lg font-black text-[#14942d]">{formatCurrency(DELIVERY_FEE)}</p>
+          <p className="text-lg font-black text-[#14942d]">{quote.fee ? formatCurrency(quote.fee) : '--'}</p>
         </div>
       </div>
     </section>
@@ -165,6 +351,9 @@ export function OrderPage() {
   const [error, setError] = useState('');
   const [confirmNameOpen, setConfirmNameOpen] = useState(false);
   const [orderType, setOrderType] = useState<'restaurant' | 'delivery'>('restaurant');
+  const [deliveryAddress, setDeliveryAddress] = useState(() => readStoredDeliveryAddress().address);
+  const [deliveryReference, setDeliveryReference] = useState(() => readStoredDeliveryAddress().reference);
+  const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote>({ status: 'idle' });
   const [activeOrder, setActiveOrder] = useState<OrderRecord | null>(null);
   const [activeOrderId, setActiveOrderId] = useState(() => window.localStorage.getItem(ACTIVE_ORDER_ID) ?? '');
   const [idempotencyKey, setIdempotencyKey] = useState(() => {
@@ -181,8 +370,64 @@ export function OrderPage() {
     []
   );
   const subtotal = items.reduce((total, item) => total + getItemUnitPrice(item) * item.quantity, 0);
-  const deliveryFee = orderType === 'delivery' ? DELIVERY_FEE : 0;
+  const deliveryFee = orderType === 'delivery' ? deliveryQuote.fee ?? 0 : 0;
   const total = subtotal + deliveryFee;
+
+  useEffect(() => {
+    persistDeliveryAddress(deliveryAddress, deliveryReference);
+  }, [deliveryAddress, deliveryReference]);
+
+  useEffect(() => {
+    if (orderType !== 'delivery') {
+      return undefined;
+    }
+
+    const trimmedAddress = deliveryAddress.trim();
+    if (trimmedAddress.length < 8) {
+      setDeliveryQuote({
+        status: 'idle',
+        message: 'Escribe una direccion completa para calcular distancia, tiempo y costo.'
+      });
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setDeliveryQuote((current) => ({
+        ...current,
+        message: 'Buscando direccion y calculando ruta...',
+        status: 'loading'
+      }));
+
+      void geocodeDeliveryAddress(trimmedAddress, controller.signal)
+        .then(async (geocoded) => {
+          const route = await calculateRoadRoute(geocoded.coordinates, controller.signal);
+          if (controller.signal.aborted) return;
+
+          setDeliveryQuote({
+            coordinates: geocoded.coordinates,
+            displayName: geocoded.displayName,
+            distanceKm: route.distanceKm,
+            durationMin: route.durationMin,
+            fee: route.fee,
+            status: 'ready',
+            trafficLabel: route.trafficLabel
+          });
+        })
+        .catch((caughtError) => {
+          if (controller.signal.aborted) return;
+          setDeliveryQuote({
+            message: caughtError instanceof Error ? caughtError.message : 'No pudimos calcular el domicilio.',
+            status: 'error'
+          });
+        });
+    }, 900);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [deliveryAddress, orderType]);
 
   useEffect(() => {
     if (!activeOrderId) return undefined;
@@ -215,6 +460,11 @@ export function OrderPage() {
       return;
     }
 
+    if (orderType === 'delivery' && deliveryQuote.status !== 'ready') {
+      setError('Ingresa una direccion valida y espera el calculo del domicilio antes de enviar.');
+      return;
+    }
+
     setSending(true);
     setError('');
     setConfirmNameOpen(false);
@@ -223,8 +473,18 @@ export function OrderPage() {
     const notesWithCustomer = [
       `Cliente: ${customerName}`,
       `Tipo de pedido: ${serviceMode}`,
-      orderType === 'delivery' ? `Direccion: ${DELIVERY_ADDRESS}` : '',
-      orderType === 'delivery' ? DELIVERY_REFERENCE : '',
+      orderType === 'delivery' ? `Direccion: ${deliveryQuote.displayName ?? deliveryAddress.trim()}` : '',
+      orderType === 'delivery' && deliveryReference.trim() ? `Referencia: ${deliveryReference.trim()}` : '',
+      orderType === 'delivery' && deliveryQuote.coordinates
+        ? `Coordenadas: ${deliveryQuote.coordinates.lat}, ${deliveryQuote.coordinates.lon}`
+        : '',
+      orderType === 'delivery' && deliveryQuote.distanceKm
+        ? `Distancia: ${formatDistance(deliveryQuote.distanceKm)}`
+        : '',
+      orderType === 'delivery' && deliveryQuote.durationMin
+        ? `Tiempo estimado: ${formatDuration(deliveryQuote.durationMin)}`
+        : '',
+      orderType === 'delivery' && deliveryQuote.trafficLabel ? `Trafico: ${deliveryQuote.trafficLabel}` : '',
       trimmedNotes ? `Observaciones: ${trimmedNotes}` : ''
     ].filter(Boolean).join(' - ');
 
@@ -445,7 +705,15 @@ export function OrderPage() {
 
             <ServiceTypeCard orderType={orderType} setOrderType={setOrderType} />
 
-            {orderType === 'delivery' ? <DeliveryAddressCard /> : null}
+            {orderType === 'delivery' ? (
+              <DeliveryAddressCard
+                address={deliveryAddress}
+                quote={deliveryQuote}
+                reference={deliveryReference}
+                setAddress={setDeliveryAddress}
+                setReference={setDeliveryReference}
+              />
+            ) : null}
 
             {error ? <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold leading-6 text-red-700">{error}</p> : null}
 
