@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dish } from '../types';
+import { getVideoResumeTime, hasVideoLoaded, markVideoLoaded, saveVideoResumeTime } from '../utils/reelVideoCache';
 
 export function ReelMedia({
   dish,
@@ -17,6 +18,40 @@ export function ReelMedia({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [videoFailed, setVideoFailed] = useState(false);
   const poster = dish.image.includes('foodreel-logo') ? undefined : dish.image;
+  const videoAlreadyLoaded = hasVideoLoaded(dish.video);
+
+  useEffect(() => {
+    setVideoFailed(false);
+  }, [dish.video]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !dish.video) {
+      return undefined;
+    }
+
+    const restoreTime = () => {
+      const resumeTime = getVideoResumeTime(dish.video);
+      if (resumeTime > 0.25 && Number.isFinite(video.duration) && resumeTime < video.duration - 0.25) {
+        try {
+          video.currentTime = resumeTime;
+        } catch {
+          // Some mobile browsers only allow seeking after enough metadata is available.
+        }
+      }
+    };
+
+    if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+      restoreTime();
+    } else {
+      video.addEventListener('loadedmetadata', restoreTime, { once: true });
+    }
+
+    return () => {
+      video.removeEventListener('loadedmetadata', restoreTime);
+      saveVideoResumeTime(dish.video, video.currentTime);
+    };
+  }, [dish.video]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -51,10 +86,13 @@ export function ReelMedia({
           className="h-full w-full object-cover"
           loop
           muted={muted}
+          onCanPlay={() => markVideoLoaded(dish.video)}
+          onLoadedData={() => markVideoLoaded(dish.video)}
           onError={() => setVideoFailed(true)}
+          onTimeUpdate={(event) => saveVideoResumeTime(dish.video, event.currentTarget.currentTime)}
           playsInline
           poster={poster}
-          preload={active ? 'auto' : 'metadata'}
+          preload={active || videoAlreadyLoaded ? 'auto' : 'metadata'}
           ref={videoRef}
           src={dish.video}
         />

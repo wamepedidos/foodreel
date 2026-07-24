@@ -1,13 +1,14 @@
 import { Grid2X2 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Dish } from '../types';
 import { useMenuStore } from '../store/useMenuStore';
+import { hasReelMenuLoadedOnce, hasVideoPreloaded, markReelMenuLoaded, markVideoPreloaded } from '../utils/reelVideoCache';
 import { LoadingSkeleton } from './LoadingSkeleton';
 import { ReelDishCard } from './ReelDishCard';
 import { WaiterCallButton } from './WaiterCallButton';
 
 export function ReelMenu({ dishes }: { dishes: Dish[] }) {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !hasReelMenuLoadedOnce());
   const storedActiveDishId = useMenuStore((state) => state.activeDishId);
   const setStoredActiveDishId = useMenuStore((state) => state.setActiveDishId);
   const selectedCategory = useMenuStore((state) => state.selectedCategory);
@@ -17,6 +18,7 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
   const [activeDishId, setActiveDishId] = useState<string | undefined>(storedActiveDishId ?? dishes[0]?.id);
   const [muted, setMuted] = useState(true);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const restoredScrollRef = useRef(false);
   const activeIndex = Math.max(
     0,
     dishes.findIndex((dish) => dish.id === activeDishId)
@@ -24,9 +26,34 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
   const nextDish = dishes[activeIndex + 1];
 
   useEffect(() => {
+    if (!loading) {
+      markReelMenuLoaded();
+      return undefined;
+    }
+
     const timer = window.setTimeout(() => setLoading(false), 650);
-    return () => window.clearTimeout(timer);
-  }, []);
+    return () => {
+      window.clearTimeout(timer);
+      markReelMenuLoaded();
+    };
+  }, [loading]);
+
+  useLayoutEffect(() => {
+    if (loading || restoredScrollRef.current || !containerRef.current) {
+      return;
+    }
+
+    const targetDishId = activeDishId ?? storedActiveDishId;
+    const target = targetDishId
+      ? containerRef.current.querySelector<HTMLElement>(`[data-dish-id="${targetDishId}"]`)
+      : null;
+
+    if (target) {
+      containerRef.current.scrollTo({ top: target.offsetTop });
+    }
+
+    restoredScrollRef.current = true;
+  }, [activeDishId, loading, storedActiveDishId]);
 
   useEffect(() => {
     if (selectedCategory === 'Todos' || categories.includes(selectedCategory)) {
@@ -194,6 +221,12 @@ function NextVideoPreloader({ dish }: { dish?: Dish }) {
       return undefined;
     }
 
+    if (hasVideoPreloaded(dish.video)) {
+      return undefined;
+    }
+
+    markVideoPreloaded(dish.video);
+
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'video';
@@ -210,6 +243,8 @@ function NextVideoPreloader({ dish }: { dish?: Dish }) {
     if (!video || !dish?.video) {
       return undefined;
     }
+
+    markVideoPreloaded(dish.video);
 
     video.muted = true;
     video.preload = 'auto';
@@ -236,7 +271,7 @@ function NextVideoPreloader({ dish }: { dish?: Dish }) {
     return () => video.removeEventListener('loadedmetadata', warmFirstTwoSeconds);
   }, [dish?.video]);
 
-  if (!dish?.video) {
+  if (!dish?.video || hasVideoPreloaded(dish.video)) {
     return null;
   }
 

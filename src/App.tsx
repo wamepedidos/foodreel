@@ -7,8 +7,10 @@ import type { Dish } from './types';
 import { dishCommentsCountChangedEvent, getMenu } from './services/dishesService';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 
+let cachedMenuDishes: Dish[] | null = null;
+
 export default function App() {
-  const [dishes, setDishes] = useState<Dish[]>([]);
+  const [dishes, setDishes] = useState<Dish[]>(() => cachedMenuDishes ?? []);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -16,6 +18,7 @@ export default function App() {
     void getMenu()
       .then((menu) => {
         if (mounted) {
+          cachedMenuDishes = menu.dishes;
           setDishes(menu.dishes);
           setError('');
         }
@@ -35,11 +38,13 @@ export default function App() {
       const detail = (event as CustomEvent<{ dishId?: string; delta?: number }>).detail;
       if (!detail?.dishId || !detail.delta) return;
       const delta = detail.delta;
-      setDishes((current) =>
-        current.map((dish) =>
+      setDishes((current) => {
+        const next = current.map((dish) =>
           dish.id === detail.dishId ? { ...dish, commentsCount: Math.max(0, dish.commentsCount + delta) } : dish
-        )
-      );
+        );
+        cachedMenuDishes = next;
+        return next;
+      });
     };
 
     window.addEventListener(dishCommentsCountChangedEvent, syncDishCommentsCount);
