@@ -1,4 +1,17 @@
-import { ArrowLeft, CheckCircle2, Clock3, Minus, Plus, ReceiptText, SendHorizonal } from 'lucide-react';
+import {
+  Bike,
+  CheckCircle2,
+  ChevronDown,
+  ClipboardList,
+  Clock3,
+  Eye,
+  Minus,
+  Pencil,
+  Plus,
+  Radio,
+  SendHorizonal,
+  Utensils
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { restaurantConfig } from '../config/restaurant';
@@ -16,27 +29,27 @@ const PENDING_IDEMPOTENCY_KEY = 'foodreel-pending-order-idempotency-key';
 const ACTIVE_ORDER_ID = 'foodreel-active-order-id';
 
 const orderStyles = {
-  shell: 'h-full overflow-y-auto px-3 pb-[112px] pt-3 sm:px-4',
+  shell: 'h-full overflow-y-auto bg-[#f7f7f6] px-4 pb-[116px] pt-4 text-[#252832]',
   content: 'mx-auto flex max-w-[520px] flex-col gap-3',
-  card: 'rounded-[22px] border border-white/10 bg-card p-4 shadow-2xl shadow-black/25',
-  surfaceCard: 'rounded-[22px] border border-white/10 bg-surface p-3 shadow-2xl shadow-black/20',
-  iconButton:
-    'grid size-10 shrink-0 place-items-center rounded-2xl border border-white/10 bg-card text-white transition hover:border-accent/50 hover:text-accent',
-  eyebrow: 'text-xs font-bold uppercase leading-none tracking-[0.18em] text-accent',
-  pageTitle: 'text-xl font-black leading-6 text-white',
-  sectionTitle: 'text-base font-black leading-5 text-white',
-  itemTitle: 'text-sm font-black leading-5 text-white',
-  itemPrice: 'text-sm font-black leading-5 text-accent',
-  body: 'text-sm font-medium leading-6 text-muted',
-  meta: 'text-xs font-medium leading-5 text-muted',
-  label: 'text-xs font-bold uppercase leading-4 tracking-[0.12em] text-muted',
-  detailLabel: 'text-[11px] font-black uppercase leading-4 tracking-[0.12em] text-white/48',
-  detailChip:
-    'inline-flex h-7 items-center rounded-full border border-white/10 bg-black/20 px-2.5 text-[11px] font-bold leading-none text-white/72',
-  pill:
-    'inline-flex h-7 shrink-0 items-center justify-center rounded-full border border-accent/35 bg-accent/10 px-2.5 text-[11px] font-black text-accent',
+  card: 'rounded-[18px] border border-[#e9e5e1] bg-white shadow-[0_18px_42px_rgba(15,23,42,0.06)]',
+  softCard: 'rounded-[18px] border border-[#eee9e5] bg-white shadow-[0_14px_36px_rgba(15,23,42,0.05)]',
+  eyebrow: 'text-[11px] font-black uppercase leading-none tracking-[0.16em] text-accent',
+  title: 'text-2xl font-black leading-7 text-[#252832]',
+  body: 'text-xs font-medium leading-5 text-[#737987]',
+  label: 'text-sm font-black leading-5 text-[#252832]',
+  smallLabel: 'text-[11px] font-black uppercase leading-4 tracking-[0.16em] text-[#252832]',
+  redPill:
+    'inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-accent bg-accent/5 px-3 text-[11px] font-black text-accent',
+  quietPill:
+    'inline-flex h-8 items-center justify-center rounded-full bg-[#f2f2f1] px-3 text-[11px] font-bold text-[#656b76]',
+  greenPill:
+    'inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-[#e9f8e8] px-3 text-[11px] font-black text-[#14942d]',
+  quantityButton:
+    'grid size-9 place-items-center rounded-full border border-accent bg-white text-accent transition hover:bg-accent hover:text-white',
+  quantityShell:
+    'inline-flex h-12 items-center gap-5 rounded-2xl border border-accent/25 bg-white px-2 text-sm font-black text-[#252832]',
   primaryButton:
-    'flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 text-sm font-bold text-white shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60'
+    'inline-flex h-12 min-w-[146px] items-center justify-center gap-2 rounded-2xl bg-accent px-4 text-sm font-black text-white shadow-[0_14px_30px_rgba(252,45,4,0.26)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60'
 };
 
 function compactList(items: unknown) {
@@ -45,6 +58,19 @@ function compactList(items: unknown) {
 
 function getItemUnitPrice(item: { price: number; selectedAdditions?: { price: number }[] }) {
   return item.price + (item.selectedAdditions ?? []).reduce((total, addition) => total + Number(addition.price || 0), 0);
+}
+
+function formatElapsed(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `00:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+}
+
+function formatOrderAge(createdAt?: string) {
+  if (!createdAt) return 'Creado ahora';
+  const minutes = Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000));
+  if (minutes < 1) return 'Creado ahora';
+  return `Creado hace ${minutes} min`;
 }
 
 export function OrderPage() {
@@ -62,6 +88,8 @@ export function OrderPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [confirmNameOpen, setConfirmNameOpen] = useState(false);
+  const [orderType, setOrderType] = useState<'restaurant' | 'delivery'>('restaurant');
+  const [elapsedSeconds, setElapsedSeconds] = useState(18 * 60 + 24);
   const [activeOrder, setActiveOrder] = useState<OrderRecord | null>(null);
   const [activeOrderId, setActiveOrderId] = useState(() => window.localStorage.getItem(ACTIVE_ORDER_ID) ?? '');
   const [idempotencyKey, setIdempotencyKey] = useState(() => {
@@ -79,6 +107,12 @@ export function OrderPage() {
   );
   const subtotal = items.reduce((total, item) => total + getItemUnitPrice(item) * item.quantity, 0);
   const total = subtotal;
+  const visibleOrderNumber = activeOrder?.orderNumber ?? 1;
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setElapsedSeconds((current) => current + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!activeOrderId) return undefined;
@@ -115,7 +149,12 @@ export function OrderPage() {
     setError('');
     setConfirmNameOpen(false);
     const trimmedNotes = customerNotes.trim();
-    const notesWithCustomer = trimmedNotes ? `Cliente: ${customerName} - ${trimmedNotes}` : `Cliente: ${customerName}`;
+    const serviceMode = orderType === 'restaurant' ? 'Comer en restaurante' : 'Domicilio';
+    const notesWithCustomer = [
+      `Cliente: ${customerName}`,
+      `Tipo de pedido: ${serviceMode}`,
+      trimmedNotes ? `Observaciones: ${trimmedNotes}` : ''
+    ].filter(Boolean).join(' - ');
 
     const payload: CreateOrderInput = {
       restaurantId: restaurantConfig.restaurantId,
@@ -172,170 +211,209 @@ export function OrderPage() {
   return (
     <div className={orderStyles.shell}>
       <div className={orderStyles.content}>
-        <div className="flex items-center gap-3 rounded-[22px] border border-white/10 bg-card p-3 shadow-2xl shadow-black/20">
-          <button aria-label="Volver al menu" className={orderStyles.iconButton} onClick={() => navigate('/menu')} type="button">
-            <ArrowLeft className="size-5" />
-          </button>
+        <section className="flex items-start justify-between gap-3 px-1 py-1">
           <div className="min-w-0">
             <p className={orderStyles.eyebrow}>Mesa {restaurantConfig.tableNumber}</p>
-            <h1 className={orderStyles.pageTitle}>Pedido</h1>
+            <h1 className={orderStyles.title}>Pedido</h1>
+            <p className={orderStyles.body}>Administras este pedido</p>
           </div>
-        </div>
+          <div className="shrink-0 text-right">
+            <span className={orderStyles.greenPill}>
+              <span className="size-1.5 rounded-full bg-[#14942d]" />
+              Mesa activa
+            </span>
+            <p className="mt-2 text-xs font-medium text-[#737987]">Tiempo en mesa</p>
+            <p className="mt-0.5 text-xs font-black text-accent">
+              <Clock3 className="mr-1 inline size-3.5 align-[-2px]" />
+              {formatElapsed(elapsedSeconds)}
+            </p>
+          </div>
+        </section>
 
-        {activeOrder ? (
-          <section className={orderStyles.card}>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-accent/15 text-accent">
-                  <Clock3 className="size-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className={orderStyles.sectionTitle}>Pedido #{activeOrder.orderNumber}</p>
-                  <p className={`truncate ${orderStyles.meta}`}>{ORDER_STATUS_LABELS[activeOrder.status]}</p>
-                </div>
-              </div>
-              <span className={orderStyles.pill}>En vivo</span>
+        <section className={`flex items-center justify-between gap-3 p-4 ${orderStyles.card}`}>
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent/10 text-accent">
+              <ClipboardList className="size-6" />
             </div>
-          </section>
-        ) : null}
+            <div className="min-w-0">
+              <p className="truncate text-lg font-black leading-6">Pedido #{visibleOrderNumber}</p>
+              <p className={orderStyles.body}>{activeOrder ? formatOrderAge(activeOrder.createdAt) : 'Creado ahora'}</p>
+            </div>
+          </div>
+          <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#e9f8e8] px-3 text-xs font-black text-[#14942d]">
+            <Radio className="size-3.5" />
+            En vivo
+          </span>
+        </section>
+
+        <section className={`grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center ${orderStyles.softCard}`}>
+          <div>
+            <p className={orderStyles.label}>Tipo de pedido</p>
+            <p className={orderStyles.body}>Selecciona como se servira este pedido</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              className={orderType === 'restaurant' ? orderStyles.redPill : 'inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-[#eee9e5] bg-white px-3 text-[11px] font-bold text-[#505662]'}
+              onClick={() => setOrderType('restaurant')}
+              type="button"
+            >
+              <Utensils className="size-4" />
+              Comer en restaurante
+            </button>
+            <button
+              className={orderType === 'delivery' ? orderStyles.redPill : 'inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-[#eee9e5] bg-white px-3 text-[11px] font-bold text-[#505662]'}
+              onClick={() => setOrderType('delivery')}
+              type="button"
+            >
+              <Bike className="size-4" />
+              Domicilio
+            </button>
+          </div>
+        </section>
 
         {items.length ? (
-          <section className={orderStyles.card}>
+          <section className={`p-4 ${orderStyles.card}`}>
             <div className="mb-4 flex items-start justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="grid size-9 shrink-0 place-items-center rounded-2xl bg-accent/15 text-accent">
-                  <ReceiptText className="size-4" />
-                </div>
-                <div className="min-w-0">
-                  <h2 className={orderStyles.sectionTitle}>Productos</h2>
-                  <p className={`truncate ${orderStyles.meta}`}>
-                    {items.length} {items.length === 1 ? 'producto' : 'productos'} en la mesa
-                  </p>
-                </div>
+              <div>
+                <p className={orderStyles.label}>Resumen del pedido</p>
+                <p className={orderStyles.body}>
+                  {items.length} {items.length === 1 ? 'producto' : 'productos'} en la mesa
+                </p>
               </div>
-              <span className={orderStyles.pill}>{formatCurrency(total)}</span>
+              <div className="flex items-center gap-2">
+                <p className="text-lg font-black text-accent">{formatCurrency(total)}</p>
+                <ChevronDown className="size-5 text-[#505662]" />
+              </div>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {items.map((item) => {
                 const selected = (selectedCartItemId ?? items[items.length - 1]?.cartItemId) === item.cartItemId;
                 const ingredients = compactList(item.ingredients);
                 const removableIngredients = compactList(item.removableIngredients);
                 const additions = item.additions.filter((addition) => addition.available);
                 const unitPrice = getItemUnitPrice(item);
+
                 return (
                   <article
-                    className={`flex cursor-pointer gap-3 rounded-[22px] border p-3 transition ${
-                      selected ? 'border-accent/60 bg-accent/10 shadow-[0_18px_42px_rgb(var(--color-primary-rgb)/0.12)]' : 'border-white/10 bg-surface'
+                    className={`rounded-[18px] border bg-white p-3 transition ${
+                      selected ? 'border-accent/25 shadow-[0_16px_34px_rgba(252,45,4,0.08)]' : 'border-[#eee9e5]'
                     }`}
                     key={item.cartItemId}
-                    onClick={() => selectDish(item.cartItemId)}
                   >
-                    <img alt="" className="size-[76px] shrink-0 rounded-2xl object-cover" src={item.image} />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={`line-clamp-2 ${orderStyles.itemTitle}`}>{item.name}</p>
-                        <p className={`shrink-0 ${orderStyles.itemPrice}`}>{formatCurrency(unitPrice * item.quantity)}</p>
-                      </div>
-                      <p className={`mt-1 ${orderStyles.meta}`}>
-                        {formatCurrency(unitPrice)}
-                        {selected ? ' - seleccionado para publicar' : ''}
-                      </p>
-                      {ingredients.length ? (
-                        <div className="mt-3 grid gap-1.5 rounded-2xl bg-black/20 p-2.5">
-                          <p className={orderStyles.detailLabel}>Ingredientes</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {ingredients.map((ingredient) => (
-                              <span className={orderStyles.detailChip} key={`${item.dishId}-${ingredient}`}>
-                                {ingredient}
-                              </span>
-                            ))}
+                    <div className="grid grid-cols-[82px_1fr] gap-3">
+                      <img alt="" className="size-[82px] rounded-2xl object-cover" src={item.image} />
+                      <div className="min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="line-clamp-2 text-sm font-black leading-5 text-[#252832]">{item.name}</p>
+                            <p className="mt-1 text-xs font-medium text-[#737987]">{formatCurrency(item.price)}</p>
                           </div>
+                          <p className="shrink-0 text-sm font-black text-accent">{formatCurrency(unitPrice * item.quantity)}</p>
                         </div>
-                      ) : null}
-                      {removableIngredients.length ? (
-                        <div className="mt-3 grid gap-1.5 rounded-2xl bg-black/20 p-2.5">
-                          <p className={orderStyles.detailLabel}>Quitar ingredientes</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {removableIngredients.map((ingredient) => {
-                              const removed = item.removedIngredients.includes(ingredient);
-                              return (
-                                <button
-                                  className={`inline-flex h-8 items-center rounded-full border px-3 text-[11px] font-bold leading-none transition ${
-                                    removed
-                                      ? 'border-accent bg-accent text-white'
-                                      : 'border-white/10 bg-black/20 text-white/72 hover:border-accent/50'
-                                  }`}
-                                  key={`${item.cartItemId}-remove-${ingredient}`}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    toggleRemovedIngredient(item.cartItemId, ingredient);
-                                  }}
-                                  type="button"
-                                >
-                                  Sin {ingredient}
-                                </button>
-                              );
-                            })}
+
+                        <div className="mt-4 flex items-center justify-between gap-2">
+                          <div className={orderStyles.quantityShell}>
+                            <button
+                              aria-label={`Quitar ${item.name}`}
+                              className={orderStyles.quantityButton}
+                              onClick={() => decrement(item.cartItemId)}
+                              type="button"
+                            >
+                              <Minus className="size-4" />
+                            </button>
+                            <span className="min-w-3 text-center">{item.quantity}</span>
+                            <button
+                              aria-label={`Agregar ${item.name}`}
+                              className="grid size-9 place-items-center rounded-full bg-accent text-white transition hover:brightness-110"
+                              onClick={() => increment(item.cartItemId)}
+                              type="button"
+                            >
+                              <Plus className="size-4" />
+                            </button>
                           </div>
-                        </div>
-                      ) : null}
-                      {additions.length ? (
-                        <div className="mt-3 grid gap-1.5 rounded-2xl bg-black/20 p-2.5">
-                          <p className={orderStyles.detailLabel}>Adiciones</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {additions.map((addition) => {
-                              const active = item.selectedAdditions.some((selectedAddition) => selectedAddition.id === addition.id);
-                              return (
-                                <button
-                                  className={`inline-flex h-8 items-center rounded-full border px-3 text-[11px] font-bold leading-none transition ${
-                                    active
-                                      ? 'border-accent bg-accent text-white'
-                                      : 'border-white/10 bg-black/20 text-white/72 hover:border-accent/50'
-                                  }`}
-                                  key={`${item.cartItemId}-addition-${addition.id}`}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    toggleAddition(item.cartItemId, addition);
-                                  }}
-                                  type="button"
-                                >
-                                  {addition.name} + {formatCurrency(addition.price)}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ) : null}
-                      <div className="mt-3 flex items-center justify-between gap-2">
-                        <div className="flex h-10 items-center rounded-2xl bg-accent px-1 text-white shadow-[0_14px_36px_rgba(252,45,4,0.24)]">
+
                           <button
-                            aria-label={`Quitar ${item.name}`}
-                            className="grid size-8 place-items-center rounded-full bg-black/20 text-white transition hover:bg-black/30"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              decrement(item.cartItemId);
-                            }}
+                            className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#eee9e5] bg-white px-3 text-xs font-bold text-[#505662] transition hover:border-accent/40 hover:text-accent"
+                            onClick={() => selectDish(item.cartItemId)}
                             type="button"
                           >
-                            <Minus className="size-4" />
-                          </button>
-                          <span className="min-w-8 text-center text-sm font-bold leading-none text-white">{item.quantity}</span>
-                          <button
-                            aria-label={`Agregar ${item.name}`}
-                            className="grid size-8 place-items-center rounded-full bg-black/20 text-white transition hover:bg-black/30"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              increment(item.cartItemId);
-                            }}
-                            type="button"
-                          >
-                            <Plus className="size-4" />
+                            <Pencil className="size-4" />
+                            Editar
                           </button>
                         </div>
-                        {selected ? <span className={orderStyles.pill}>Publicable</span> : null}
                       </div>
                     </div>
+
+                    {selected ? (
+                      <div className="mt-3 space-y-2 rounded-[16px] border border-[#eee9e5] bg-white p-3">
+                        {ingredients.length ? (
+                          <div>
+                            <p className={orderStyles.smallLabel}>Ingredientes incluidos</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {ingredients.map((ingredient) => (
+                                <span className="inline-flex h-7 items-center rounded-full bg-[#eaf7ec] px-3 text-[11px] font-bold text-[#207a32]" key={`${item.cartItemId}-included-${ingredient}`}>
+                                  {ingredient}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {removableIngredients.length ? (
+                          <div>
+                            <p className={orderStyles.smallLabel}>Quitar ingredientes</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {removableIngredients.map((ingredient) => {
+                                const removed = item.removedIngredients.includes(ingredient);
+                                return (
+                                  <button
+                                    className={`inline-flex h-8 items-center rounded-full px-3 text-[11px] font-bold transition ${
+                                      removed ? 'bg-accent text-white' : 'bg-[#f2f2f1] text-[#505662] hover:bg-accent/10 hover:text-accent'
+                                    }`}
+                                    key={`${item.cartItemId}-remove-${ingredient}`}
+                                    onClick={() => toggleRemovedIngredient(item.cartItemId, ingredient)}
+                                    type="button"
+                                  >
+                                    Sin {ingredient}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {additions.length ? (
+                          <div>
+                            <p className={orderStyles.smallLabel}>Adiciones</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {additions.map((addition) => {
+                                const active = item.selectedAdditions.some((selectedAddition) => selectedAddition.id === addition.id);
+                                return (
+                                  <button
+                                    className={`inline-flex h-8 items-center rounded-full px-3 text-[11px] font-bold transition ${
+                                      active ? 'bg-accent text-white' : 'bg-[#f2f2f1] text-[#505662] hover:bg-accent/10 hover:text-accent'
+                                    }`}
+                                    key={`${item.cartItemId}-addition-${addition.id}`}
+                                    onClick={() => toggleAddition(item.cartItemId, addition)}
+                                    type="button"
+                                  >
+                                    {addition.name} + {formatCurrency(addition.price)}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <div className="flex justify-end">
+                          <span className="inline-flex h-8 items-center gap-1.5 rounded-2xl bg-accent/5 px-3 text-[11px] font-black text-accent">
+                            <Eye className="size-3.5" />
+                            Publicable
+                          </span>
+                        </div>
+                      </div>
+                    ) : null}
                   </article>
                 );
               })}
@@ -344,52 +422,57 @@ export function OrderPage() {
             <label className="mt-4 block">
               <span className={orderStyles.label}>Observaciones</span>
               <textarea
-                className="mt-2 min-h-24 w-full resize-none rounded-2xl border border-white/10 bg-base px-4 py-3 text-sm font-medium leading-6 text-white outline-none transition placeholder:text-muted focus:border-accent/60 focus:ring-2 focus:ring-accent/10"
+                className="mt-2 min-h-20 w-full resize-none rounded-2xl border border-[#eee9e5] bg-white px-4 py-3 text-sm font-medium leading-6 text-[#252832] outline-none transition placeholder:text-[#9aa0aa] focus:border-accent/60 focus:ring-2 focus:ring-accent/10"
                 maxLength={240}
                 onChange={(event) => setCustomerNotes(event.target.value)}
-                placeholder="Ej: sin cebolla, traer cubiertos..."
+                placeholder="Ej: traer cubiertos, bebida sin hielo..."
                 value={customerNotes}
               />
             </label>
 
-            {error ? <p className="mt-3 rounded-2xl border border-error/30 bg-error/10 p-3 text-sm font-bold leading-6 text-red-100">{error}</p> : null}
+            {error ? <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold leading-6 text-red-700">{error}</p> : null}
 
-            <div className="mt-4 rounded-2xl bg-black/20 p-3">
-              <div className="flex items-center justify-between text-sm font-medium leading-6 text-muted">
-                <span>Subtotal</span>
-                <span>{formatCurrency(subtotal)}</span>
-              </div>
-              <div className="mt-1 flex items-center justify-between text-lg font-black leading-7 text-white">
-                <span>Total</span>
-                <span>{formatCurrency(total)}</span>
+            <div className="mt-4 grid grid-cols-[1fr_1.28fr] gap-3">
+              <button
+                className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl border border-dashed border-[#e2ddd8] bg-white text-xs font-black text-accent transition hover:border-accent/50"
+                onClick={() => navigate('/menu')}
+                type="button"
+              >
+                <Plus className="size-4" />
+                Agregar producto
+              </button>
+              <div className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-accent/25 bg-white p-2">
+                <div className="pl-1">
+                  <p className="text-xs font-medium text-[#737987]">Total del pedido</p>
+                  <p className="text-sm font-black text-accent">{formatCurrency(total)}</p>
+                </div>
+                <button className={orderStyles.primaryButton} disabled={sending} onClick={() => setConfirmNameOpen(true)} type="button">
+                  {sending ? (
+                    <>
+                      <Clock3 className="size-5 animate-pulse" />
+                      Enviando
+                    </>
+                  ) : (
+                    <>
+                      <SendHorizonal className="size-5" />
+                      Enviar a cocina
+                    </>
+                  )}
+                </button>
               </div>
             </div>
-
-            <button className={`mt-4 ${orderStyles.primaryButton}`} disabled={sending} onClick={() => setConfirmNameOpen(true)} type="button">
-              {sending ? (
-                <>
-                  <Clock3 className="size-5 animate-pulse" />
-                  Enviando pedido
-                </>
-              ) : (
-                <>
-                  <SendHorizonal className="size-5" />
-                  Enviar pedido
-                </>
-              )}
-            </button>
           </section>
         ) : activeOrder ? (
           <ActiveOrderReceipt order={activeOrder} onCreateAnother={() => navigate('/menu')} />
         ) : (
-          <section className={`grid min-h-[48dvh] place-items-center text-center ${orderStyles.card}`}>
+          <section className={`grid min-h-[42dvh] place-items-center p-6 text-center ${orderStyles.card}`}>
             <div>
-              <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent/15 text-accent">
+              <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent/10 text-accent">
                 <CheckCircle2 className="size-7" />
               </div>
-              <h2 className="mt-4 text-lg font-black leading-7 text-white">Tu pedido esta listo para seguimiento</h2>
+              <h2 className="mt-4 text-lg font-black leading-7 text-[#252832]">Tu pedido esta listo para seguimiento</h2>
               <p className={orderStyles.body}>Agrega productos desde el menu para crear otro pedido.</p>
-              <button className={`mx-auto mt-5 max-w-[180px] ${orderStyles.primaryButton}`} onClick={() => navigate('/menu')} type="button">
+              <button className={`mx-auto mt-5 ${orderStyles.primaryButton}`} onClick={() => navigate('/menu')} type="button">
                 Ver menu
               </button>
             </div>
@@ -410,32 +493,32 @@ export function OrderPage() {
 
 function ActiveOrderReceipt({ order, onCreateAnother }: { order: OrderRecord; onCreateAnother: () => void }) {
   return (
-    <section className={orderStyles.card}>
+    <section className={`p-4 ${orderStyles.card}`}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className={orderStyles.label}>Pedido enviado</p>
-          <h2 className={orderStyles.sectionTitle}>Resumen #{order.orderNumber}</h2>
-          <p className={`mt-1 ${orderStyles.meta}`}>{ORDER_STATUS_LABELS[order.status]}</p>
+          <h2 className="text-lg font-black leading-6 text-[#252832]">Resumen #{order.orderNumber}</h2>
+          <p className={`mt-1 ${orderStyles.body}`}>{ORDER_STATUS_LABELS[order.status]}</p>
         </div>
-        <span className={orderStyles.pill}>{formatCurrency(order.total)}</span>
+        <span className={orderStyles.redPill}>{formatCurrency(order.total)}</span>
       </div>
 
       <div className="space-y-2.5">
         {order.items.map((item) => (
-          <article className={orderStyles.surfaceCard} key={`${order.id}-${item.dishId}`}>
+          <article className="rounded-[18px] border border-[#eee9e5] bg-white p-3" key={`${order.id}-${item.dishId}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className={`line-clamp-2 ${orderStyles.itemTitle}`}>{item.name}</p>
-                <p className={`mt-1 ${orderStyles.meta}`}>
+                <p className="line-clamp-2 text-sm font-black leading-5 text-[#252832]">{item.name}</p>
+                <p className="mt-1 text-xs font-medium text-[#737987]">
                   {item.quantity} x {formatCurrency(item.unitPrice)}
                 </p>
               </div>
-              <p className={`shrink-0 ${orderStyles.itemPrice}`}>{formatCurrency(item.subtotal)}</p>
+              <p className="shrink-0 text-sm font-black text-accent">{formatCurrency(item.subtotal)}</p>
             </div>
             {item.selectedOptions.length ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {item.selectedOptions.map((option) => (
-                  <span className={orderStyles.detailChip} key={`${order.id}-${item.dishId}-option-${option.value}`}>
+                  <span className="inline-flex h-7 items-center rounded-full bg-accent px-3 text-[11px] font-bold text-white" key={`${order.id}-${item.dishId}-option-${option.value}`}>
                     Sin {option.value}
                   </span>
                 ))}
@@ -444,36 +527,36 @@ function ActiveOrderReceipt({ order, onCreateAnother }: { order: OrderRecord; on
             {item.selectedExtras.length ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {item.selectedExtras.map((extra) => (
-                  <span className={orderStyles.detailChip} key={`${order.id}-${item.dishId}-extra-${extra.value}`}>
+                  <span className="inline-flex h-7 items-center rounded-full bg-[#f2f2f1] px-3 text-[11px] font-bold text-[#505662]" key={`${order.id}-${item.dishId}-extra-${extra.value}`}>
                     {extra.name} + {formatCurrency(extra.price ?? 0)}
                   </span>
                 ))}
               </div>
             ) : null}
-            {item.notes ? <p className={`mt-2 ${orderStyles.meta}`}>Nota: {item.notes}</p> : null}
+            {item.notes ? <p className="mt-2 text-xs font-medium text-[#737987]">Nota: {item.notes}</p> : null}
           </article>
         ))}
       </div>
 
       {order.customerNotes ? (
-        <p className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-sm font-medium leading-6 text-white">
+        <p className="mt-3 rounded-2xl border border-[#eee9e5] bg-[#fafafa] p-3 text-sm font-medium leading-6 text-[#252832]">
           <span className="font-bold text-accent">Observaciones: </span>
           {order.customerNotes}
         </p>
       ) : null}
 
-      <div className="mt-4 rounded-2xl bg-black/20 p-3">
-        <div className="flex items-center justify-between text-sm font-medium leading-6 text-muted">
+      <div className="mt-4 rounded-2xl bg-[#f3f3f2] p-3">
+        <div className="flex items-center justify-between text-sm font-medium leading-6 text-[#737987]">
           <span>Subtotal</span>
           <span>{formatCurrency(order.subtotal)}</span>
         </div>
-        <div className="mt-1 flex items-center justify-between text-lg font-black leading-7 text-white">
+        <div className="mt-1 flex items-center justify-between text-lg font-black leading-7 text-[#252832]">
           <span>Total</span>
           <span>{formatCurrency(order.total)}</span>
         </div>
       </div>
 
-      <button className={`mt-4 ${orderStyles.primaryButton}`} onClick={onCreateAnother} type="button">
+      <button className={`mt-4 w-full ${orderStyles.primaryButton}`} onClick={onCreateAnother} type="button">
         Ver menu
       </button>
     </section>
