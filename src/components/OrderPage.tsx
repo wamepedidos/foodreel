@@ -178,7 +178,7 @@ export function OrderPage() {
           </button>
           <div className="min-w-0">
             <p className={orderStyles.eyebrow}>Mesa {restaurantConfig.tableNumber}</p>
-            <h1 className={orderStyles.pageTitle}>Tu pedido</h1>
+            <h1 className={orderStyles.pageTitle}>Pedido</h1>
           </div>
         </div>
 
