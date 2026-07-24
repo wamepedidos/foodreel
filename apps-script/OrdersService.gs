@@ -40,6 +40,7 @@ function createOrder(payload, context) {
       };
     });
     var subtotal = computedItems.reduce(function(total, item) { return total + item.subtotal; }, 0);
+    var deliveryOrServiceTotal = Math.max(0, toNumber(payload.upsellTotal));
     var order = {
       id: orderId,
       restaurantId: payload.restaurantId,
@@ -52,8 +53,8 @@ function createOrder(payload, context) {
       source: 'customer_pwa',
       status: 'new',
       subtotal: subtotal,
-      upsellTotal: 0,
-      total: subtotal,
+      upsellTotal: deliveryOrServiceTotal,
+      total: subtotal + deliveryOrServiceTotal,
       customerNotes: String(payload.customerNotes || '').slice(0, 500),
       waiterId: '',
       createdAt: timestamp,

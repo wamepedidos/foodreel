@@ -21,10 +21,12 @@ export function AppLayout({ children, restaurant }: { children: ReactNode; resta
     : 'border-x border-white/5 md:my-4 md:h-[calc(100dvh-32px)] md:rounded-[28px] md:border';
 
   return (
-    <div className="min-h-dvh w-full bg-base text-white">
+    <div className={`min-h-dvh w-full ${orderRoute ? 'bg-[#f7f7f6] text-[#252832]' : 'bg-base text-white'}`}>
       <div
         aria-label={`${restaurant.restaurantName} - Mesa ${restaurant.tableNumber}`}
-        className={`relative mx-auto flex h-dvh w-full flex-col overflow-hidden bg-base shadow-2xl transition-[max-width] duration-300 ${frameClass} ${maxWidthClass}`}
+        className={`relative mx-auto flex h-dvh w-full flex-col overflow-hidden shadow-2xl transition-[max-width] duration-300 ${
+          orderRoute ? 'bg-[#f7f7f6]' : 'bg-base'
+        } ${frameClass} ${maxWidthClass}`}
       >
         {immersiveMenu ? null : orderRoute ? <OrderHeader /> : <RestaurantHeader restaurant={restaurant} />}
         <main className="relative min-h-0 w-full flex-1 overflow-hidden">{children}</main>

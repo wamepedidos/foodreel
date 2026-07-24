@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Clock3,
   Eye,
+  MapPin,
   Minus,
   Pencil,
   Plus,
@@ -27,6 +28,11 @@ import { useToast } from './Toast';
 
 const PENDING_IDEMPOTENCY_KEY = 'foodreel-pending-order-idempotency-key';
 const ACTIVE_ORDER_ID = 'foodreel-active-order-id';
+const DELIVERY_FEE = 3000;
+const DELIVERY_ADDRESS = 'Carrera 50 # 12 Sur - 45, Sabaneta, Antioquia';
+const DELIVERY_REFERENCE = 'Apartamento 302 - Referencia: Porteria azul';
+const OSM_EMBED_URL =
+  'https://www.openstreetmap.org/export/embed.html?bbox=-75.6220%2C6.1472%2C-75.6008%2C6.1598&layer=mapnik&marker=6.1535%2C-75.6112';
 
 const orderStyles = {
   shell: 'h-full overflow-y-auto bg-[#f7f7f6] px-4 pb-[116px] pt-4 text-[#252832]',
@@ -73,6 +79,56 @@ function formatOrderAge(createdAt?: string) {
   return `Creado hace ${minutes} min`;
 }
 
+function DeliveryAddressCard() {
+  return (
+    <section className={`overflow-hidden p-4 ${orderStyles.card}`}>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className={orderStyles.label}>Direccion de entrega</p>
+          <div className="mt-2 flex items-start gap-2">
+            <MapPin className="mt-0.5 size-5 shrink-0 text-accent" />
+            <div className="min-w-0">
+              <p className="text-sm font-black leading-5 text-[#252832]">{DELIVERY_ADDRESS}</p>
+              <p className={orderStyles.body}>{DELIVERY_REFERENCE}</p>
+            </div>
+          </div>
+        </div>
+        <button
+          className="inline-flex h-9 items-center gap-2 rounded-2xl border border-[#eee9e5] bg-white px-3 text-xs font-bold text-[#505662] transition hover:border-accent/40 hover:text-accent"
+          type="button"
+        >
+          <Pencil className="size-4" />
+          Editar
+        </button>
+      </div>
+
+      <div className="relative h-[132px] overflow-hidden rounded-2xl border border-[#eee9e5] bg-[#eef0eb]">
+        <iframe
+          className="absolute inset-0 h-full w-full border-0"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          src={OSM_EMBED_URL}
+          title="Mapa de direccion de entrega en OpenStreetMap"
+        />
+      </div>
+
+      <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-[#eee9e5] bg-white p-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Bike className="size-5 shrink-0 text-[#505662]" />
+          <div>
+            <p className="text-xs font-medium text-[#737987]">Tiempo estimado de entrega</p>
+            <p className="text-sm font-black text-[#252832]">30 - 40 min</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-xs font-medium text-[#737987]">Costo de envio</p>
+          <p className="text-lg font-black text-[#14942d]">{formatCurrency(DELIVERY_FEE)}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function OrderPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -106,7 +162,8 @@ export function OrderPage() {
     []
   );
   const subtotal = items.reduce((total, item) => total + getItemUnitPrice(item) * item.quantity, 0);
-  const total = subtotal;
+  const deliveryFee = orderType === 'delivery' ? DELIVERY_FEE : 0;
+  const total = subtotal + deliveryFee;
   const visibleOrderNumber = activeOrder?.orderNumber ?? 1;
 
   useEffect(() => {
@@ -153,6 +210,8 @@ export function OrderPage() {
     const notesWithCustomer = [
       `Cliente: ${customerName}`,
       `Tipo de pedido: ${serviceMode}`,
+      orderType === 'delivery' ? `Direccion: ${DELIVERY_ADDRESS}` : '',
+      orderType === 'delivery' ? DELIVERY_REFERENCE : '',
       trimmedNotes ? `Observaciones: ${trimmedNotes}` : ''
     ].filter(Boolean).join(' - ');
 
@@ -184,7 +243,7 @@ export function OrderPage() {
         unitPrice: getItemUnitPrice(item)
       })),
       subtotal,
-      upsellTotal: 0,
+      upsellTotal: deliveryFee,
       total,
       customerNotes: notesWithCustomer
     };
@@ -271,13 +330,15 @@ export function OrderPage() {
           </div>
         </section>
 
+        {orderType === 'delivery' ? <DeliveryAddressCard /> : null}
+
         {items.length ? (
           <section className={`p-4 ${orderStyles.card}`}>
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className={orderStyles.label}>Resumen del pedido</p>
                 <p className={orderStyles.body}>
-                  {items.length} {items.length === 1 ? 'producto' : 'productos'} en la mesa
+                  {items.length} {items.length === 1 ? 'producto' : 'productos'} {orderType === 'delivery' ? 'para entregar' : 'en la mesa'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -442,9 +503,19 @@ export function OrderPage() {
                 Agregar producto
               </button>
               <div className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-accent/25 bg-white p-2">
-                <div className="pl-1">
-                  <p className="text-xs font-medium text-[#737987]">Total del pedido</p>
-                  <p className="text-sm font-black text-accent">{formatCurrency(total)}</p>
+                <div className="grid grid-cols-3 gap-2 pl-1">
+                  <div>
+                    <p className="text-[11px] font-medium text-[#737987]">Subtotal</p>
+                    <p className="text-xs font-bold text-[#252832]">{formatCurrency(subtotal)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium text-[#737987]">Envio</p>
+                    <p className="text-xs font-bold text-[#252832]">{formatCurrency(deliveryFee)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium text-[#737987]">Total</p>
+                    <p className="text-sm font-black text-accent">{formatCurrency(total)}</p>
+                  </div>
                 </div>
                 <button className={orderStyles.primaryButton} disabled={sending} onClick={() => setConfirmNameOpen(true)} type="button">
                   {sending ? (
@@ -550,6 +621,12 @@ function ActiveOrderReceipt({ order, onCreateAnother }: { order: OrderRecord; on
           <span>Subtotal</span>
           <span>{formatCurrency(order.subtotal)}</span>
         </div>
+        {order.upsellTotal > 0 ? (
+          <div className="flex items-center justify-between text-sm font-medium leading-6 text-[#737987]">
+            <span>Envio</span>
+            <span>{formatCurrency(order.upsellTotal)}</span>
+          </div>
+        ) : null}
         <div className="mt-1 flex items-center justify-between text-lg font-black leading-7 text-[#252832]">
           <span>Total</span>
           <span>{formatCurrency(order.total)}</span>
