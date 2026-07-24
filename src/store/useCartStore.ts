@@ -35,6 +35,66 @@ function createCartItemId(dishId: string) {
   return `${dishId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizeStringList(value: unknown) {
+  return Array.isArray(value) ? value.map(String).map((item) => item.trim()).filter(Boolean) : [];
+}
+
+function normalizeAdditions(value: unknown): DishAddition[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((addition) => {
+    if (!addition || typeof addition !== 'object') return [];
+    const raw = addition as Partial<DishAddition>;
+    const name = typeof raw.name === 'string' ? raw.name.trim() : '';
+    if (!name) return [];
+
+    return [
+      {
+        id: typeof raw.id === 'string' && raw.id.trim() ? raw.id : name,
+        name,
+        description: typeof raw.description === 'string' ? raw.description : undefined,
+        price: Number(raw.price || 0),
+        available: raw.available !== false,
+        defaultSelected: Boolean(raw.defaultSelected)
+      }
+    ];
+  });
+}
+
+function normalizeCartItems(value: unknown): CartItem[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const raw = item as Partial<CartItem>;
+    const dishId = typeof raw.dishId === 'string' && raw.dishId.trim() ? raw.dishId : '';
+    if (!dishId) return [];
+
+    const ingredients = normalizeStringList(raw.ingredients);
+    const removableIngredients = normalizeStringList(raw.removableIngredients);
+    const additions = normalizeAdditions(raw.additions);
+    const selectedAdditions = normalizeAdditions(raw.selectedAdditions).filter((addition) =>
+      additions.some((availableAddition) => availableAddition.id === addition.id || availableAddition.name === addition.name)
+    );
+
+    return [
+      {
+        cartItemId: typeof raw.cartItemId === 'string' && raw.cartItemId.trim() ? raw.cartItemId : createCartItemId(dishId),
+        additions,
+        dishId,
+        image: typeof raw.image === 'string' ? raw.image : '',
+        ingredients,
+        name: typeof raw.name === 'string' && raw.name.trim() ? raw.name : 'Producto',
+        price: Number(raw.price || 0),
+        removableIngredients: removableIngredients.length ? removableIngredients : ingredients,
+        removedIngredients: normalizeStringList(raw.removedIngredients),
+        selectedAdditions,
+        quantity: Math.max(1, Math.floor(Number(raw.quantity || 1)))
+      }
+    ];
+  });
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -135,8 +195,30 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'foodreel-cart',
-      version: 3,
-      migrate: () => ({ items: [], selectedCartItemId: undefined, selectedDishId: undefined })
+      version: 4,
+      migrate: (persistedState) => {
+        const state = persistedState && typeof persistedState === 'object' ? (persistedState as Partial<CartState>) : {};
+        const items = normalizeCartItems(state.items);
+        const selected = items.find((item) => item.cartItemId === state.selectedCartItemId) ?? items[items.length - 1];
+
+        return {
+          items,
+          selectedCartItemId: selected?.cartItemId,
+          selectedDishId: selected?.dishId
+        };
+      },
+      merge: (persistedState, currentState) => {
+        const state = persistedState && typeof persistedState === 'object' ? (persistedState as Partial<CartState>) : {};
+        const items = normalizeCartItems(state.items);
+        const selected = items.find((item) => item.cartItemId === state.selectedCartItemId) ?? items[items.length - 1];
+
+        return {
+          ...currentState,
+          items,
+          selectedCartItemId: selected?.cartItemId,
+          selectedDishId: selected?.dishId
+        };
+      }
     }
   )
 );

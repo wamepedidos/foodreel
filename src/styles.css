@@ -398,6 +398,31 @@ textarea {
   color: #252832 !important;
 }
 
+.order-app-header .order-back-button {
+  appearance: none;
+  background: #fff !important;
+  background-color: #fff !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  color: #252832 !important;
+  color-scheme: light;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08) !important;
+}
+
+.order-app-header .order-back-button svg {
+  color: #252832 !important;
+  stroke: #252832 !important;
+}
+
+.order-app-header .order-back-button:hover {
+  border-color: rgba(252, 45, 4, 0.4) !important;
+  color: rgb(var(--color-primary-rgb)) !important;
+}
+
+.order-app-header .order-back-button:hover svg {
+  color: rgb(var(--color-primary-rgb)) !important;
+  stroke: rgb(var(--color-primary-rgb)) !important;
+}
+
 .order-page-shell .order-white-card,
 .order-page-shell [class*="border-[#eee9e5]"],
 .order-page-shell [class*="border-[#e9e5e1]"] {

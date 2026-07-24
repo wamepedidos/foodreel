@@ -45,7 +45,7 @@ function OrderHeader() {
       <div className="flex min-w-0 items-center gap-3">
         <button
           aria-label="Volver al menu"
-          className="grid size-11 shrink-0 place-items-center rounded-2xl border border-black/5 bg-white text-[#252832] shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition hover:border-accent/40 hover:text-accent"
+          className="order-back-button grid size-11 shrink-0 place-items-center rounded-2xl border border-black/5 bg-white text-[#252832] shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition hover:border-accent/40 hover:text-accent"
           onClick={() => navigate('/menu')}
           type="button"
         >

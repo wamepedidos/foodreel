@@ -19,7 +19,7 @@ import { restaurantConfig } from '../config/restaurant';
 import { ORDER_STATUS_LABELS } from '../orders/orderStatus';
 import { createOrder, getOrderById, subscribeToOrder } from '../services/ordersService';
 import { useCartStore } from '../store/useCartStore';
-import type { CreateOrderInput, OrderRecord } from '../types';
+import type { CreateOrderInput, DishAddition, OrderRecord } from '../types';
 import { formatCurrency } from '../utils/format';
 import { readCustomerProfile } from '../utils/customerProfile';
 import { getOrCreateCustomerSessionId, getOrCreateTableSessionId, makeIdempotencyKey } from '../utils/session';
@@ -64,6 +64,10 @@ function compactList(items: unknown) {
 
 function getItemUnitPrice(item: { price: number; selectedAdditions?: { price: number }[] }) {
   return item.price + (item.selectedAdditions ?? []).reduce((total, addition) => total + Number(addition.price || 0), 0);
+}
+
+function compactAdditions(items: unknown): DishAddition[] {
+  return Array.isArray(items) ? (items as DishAddition[]) : [];
 }
 
 function formatElapsed(seconds: number) {
@@ -352,7 +356,8 @@ export function OrderPage() {
                 const selected = (selectedCartItemId ?? items[items.length - 1]?.cartItemId) === item.cartItemId;
                 const ingredients = compactList(item.ingredients);
                 const removableIngredients = compactList(item.removableIngredients);
-                const additions = item.additions.filter((addition) => addition.available);
+                const selectedAdditions = compactAdditions(item.selectedAdditions);
+                const additions = compactAdditions(item.additions).filter((addition) => addition.available);
                 const unitPrice = getItemUnitPrice(item);
 
                 return (
@@ -449,7 +454,7 @@ export function OrderPage() {
                             <p className={orderStyles.smallLabel}>Adiciones</p>
                             <div className="mt-2 flex flex-wrap gap-2">
                               {additions.map((addition) => {
-                                const active = item.selectedAdditions.some((selectedAddition) => selectedAddition.id === addition.id);
+                                const active = selectedAdditions.some((selectedAddition) => selectedAddition.id === addition.id);
                                 return (
                                   <button
                                     className={`inline-flex h-8 items-center rounded-full px-3 text-[11px] font-bold transition ${
@@ -563,6 +568,11 @@ export function OrderPage() {
 }
 
 function ActiveOrderReceipt({ order, onCreateAnother }: { order: OrderRecord; onCreateAnother: () => void }) {
+  const orderItems = Array.isArray(order.items) ? order.items : [];
+  const subtotal = Number(order.subtotal || 0);
+  const upsellTotal = Number(order.upsellTotal || 0);
+  const total = Number(order.total || subtotal + upsellTotal);
+
   return (
     <section className={`p-4 ${orderStyles.card}`}>
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -571,42 +581,47 @@ function ActiveOrderReceipt({ order, onCreateAnother }: { order: OrderRecord; on
           <h2 className="text-lg font-black leading-6 text-[#252832]">Resumen #{order.orderNumber}</h2>
           <p className={`mt-1 ${orderStyles.body}`}>{ORDER_STATUS_LABELS[order.status]}</p>
         </div>
-        <span className={orderStyles.redPill}>{formatCurrency(order.total)}</span>
+        <span className={orderStyles.redPill}>{formatCurrency(total)}</span>
       </div>
 
       <div className="space-y-2.5">
-        {order.items.map((item) => (
-          <article className="rounded-[18px] border border-[#eee9e5] bg-white p-3" key={`${order.id}-${item.dishId}`}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="line-clamp-2 text-sm font-black leading-5 text-[#252832]">{item.name}</p>
-                <p className="mt-1 text-xs font-medium text-[#737987]">
-                  {item.quantity} x {formatCurrency(item.unitPrice)}
-                </p>
+        {orderItems.map((item) => {
+          const selectedOptions = Array.isArray(item.selectedOptions) ? item.selectedOptions : [];
+          const selectedExtras = Array.isArray(item.selectedExtras) ? item.selectedExtras : [];
+
+          return (
+            <article className="rounded-[18px] border border-[#eee9e5] bg-white p-3" key={`${order.id}-${item.dishId}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="line-clamp-2 text-sm font-black leading-5 text-[#252832]">{item.name}</p>
+                  <p className="mt-1 text-xs font-medium text-[#737987]">
+                    {item.quantity} x {formatCurrency(item.unitPrice)}
+                  </p>
+                </div>
+                <p className="shrink-0 text-sm font-black text-accent">{formatCurrency(item.subtotal)}</p>
               </div>
-              <p className="shrink-0 text-sm font-black text-accent">{formatCurrency(item.subtotal)}</p>
-            </div>
-            {item.selectedOptions.length ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {item.selectedOptions.map((option) => (
-                  <span className="inline-flex h-7 items-center rounded-full bg-accent px-3 text-[11px] font-bold text-white" key={`${order.id}-${item.dishId}-option-${option.value}`}>
-                    Sin {option.value}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-            {item.selectedExtras.length ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {item.selectedExtras.map((extra) => (
-                  <span className="inline-flex h-7 items-center rounded-full bg-[#f2f2f1] px-3 text-[11px] font-bold text-[#505662]" key={`${order.id}-${item.dishId}-extra-${extra.value}`}>
-                    {extra.name} + {formatCurrency(extra.price ?? 0)}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-            {item.notes ? <p className="mt-2 text-xs font-medium text-[#737987]">Nota: {item.notes}</p> : null}
-          </article>
-        ))}
+              {selectedOptions.length ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {selectedOptions.map((option) => (
+                    <span className="inline-flex h-7 items-center rounded-full bg-accent px-3 text-[11px] font-bold text-white" key={`${order.id}-${item.dishId}-option-${option.value}`}>
+                      Sin {option.value}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {selectedExtras.length ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {selectedExtras.map((extra) => (
+                    <span className="inline-flex h-7 items-center rounded-full bg-[#f2f2f1] px-3 text-[11px] font-bold text-[#505662]" key={`${order.id}-${item.dishId}-extra-${extra.value}`}>
+                      {extra.name} + {formatCurrency(extra.price ?? 0)}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {item.notes ? <p className="mt-2 text-xs font-medium text-[#737987]">Nota: {item.notes}</p> : null}
+            </article>
+          );
+        })}
       </div>
 
       {order.customerNotes ? (
@@ -619,17 +634,17 @@ function ActiveOrderReceipt({ order, onCreateAnother }: { order: OrderRecord; on
       <div className="mt-4 rounded-2xl bg-[#f3f3f2] p-3">
         <div className="flex items-center justify-between text-sm font-medium leading-6 text-[#737987]">
           <span>Subtotal</span>
-          <span>{formatCurrency(order.subtotal)}</span>
+          <span>{formatCurrency(subtotal)}</span>
         </div>
-        {order.upsellTotal > 0 ? (
+        {upsellTotal > 0 ? (
           <div className="flex items-center justify-between text-sm font-medium leading-6 text-[#737987]">
             <span>Envio</span>
-            <span>{formatCurrency(order.upsellTotal)}</span>
+            <span>{formatCurrency(upsellTotal)}</span>
           </div>
         ) : null}
         <div className="mt-1 flex items-center justify-between text-lg font-black leading-7 text-[#252832]">
           <span>Total</span>
-          <span>{formatCurrency(order.total)}</span>
+          <span>{formatCurrency(total)}</span>
         </div>
       </div>
 
