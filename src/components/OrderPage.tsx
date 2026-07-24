@@ -12,6 +12,8 @@ import {
   SendHorizonal,
   Utensils
 } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { restaurantConfig } from '../config/restaurant';
@@ -45,6 +47,7 @@ type DeliveryQuote = {
   durationMin?: number;
   fee?: number;
   message?: string;
+  routeCoordinates?: DeliveryCoordinates[];
   status: 'idle' | 'loading' | 'ready' | 'error';
   trafficLabel?: string;
 };
@@ -138,19 +141,6 @@ function getTrafficEstimate(date = new Date()) {
   return { label: 'Trafico normal', multiplier: 1 };
 }
 
-function createMapEmbedUrl(coordinates?: DeliveryCoordinates) {
-  const marker = coordinates ?? RESTAURANT_COORDINATES;
-  const delta = coordinates ? 0.01 : 0.008;
-  const bbox = [
-    marker.lon - delta,
-    marker.lat - delta,
-    marker.lon + delta,
-    marker.lat + delta
-  ].join('%2C');
-
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${marker.lat}%2C${marker.lon}`;
-}
-
 function formatDistance(distanceKm?: number) {
   return typeof distanceKm === 'number' ? `${distanceKm.toFixed(distanceKm >= 10 ? 0 : 1)} km` : '--';
 }
@@ -229,7 +219,8 @@ function requestBrowserLocation() {
 async function calculateRoadRoute(destination: DeliveryCoordinates, signal: AbortSignal) {
   const params = new URLSearchParams({
     alternatives: 'false',
-    overview: 'false',
+    geometries: 'geojson',
+    overview: 'full',
     steps: 'false'
   });
   const coordinates = `${RESTAURANT_COORDINATES.lon},${RESTAURANT_COORDINATES.lat};${destination.lon},${destination.lat}`;
@@ -239,7 +230,16 @@ async function calculateRoadRoute(destination: DeliveryCoordinates, signal: Abor
     throw new Error('No pudimos calcular la ruta del domicilio.');
   }
 
-  const result = (await response.json()) as { routes?: Array<{ distance: number; duration: number }> };
+  const result = (await response.json()) as {
+    routes?: Array<{
+      distance: number;
+      duration: number;
+      geometry?: {
+        coordinates?: Array<[number, number]>;
+        type?: string;
+      };
+    }>;
+  };
   const route = result.routes?.[0];
   if (!route) {
     throw new Error('No encontramos una ruta disponible para esa direccion.');
@@ -251,8 +251,107 @@ async function calculateRoadRoute(destination: DeliveryCoordinates, signal: Abor
     distanceKm,
     durationMin: (route.duration / 60) * traffic.multiplier,
     fee: calculateDeliveryFee(distanceKm),
+    routeCoordinates:
+      route.geometry?.coordinates?.map(([lon, lat]) => ({ lat, lon })) ?? [
+        RESTAURANT_COORDINATES,
+        destination
+      ],
     trafficLabel: traffic.label
   };
+}
+
+function DeliveryRouteMap({
+  destination,
+  routeCoordinates
+}: {
+  destination?: DeliveryCoordinates;
+  routeCoordinates?: DeliveryCoordinates[];
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const layerGroupRef = useRef<L.LayerGroup | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return undefined;
+
+    const map = L.map(containerRef.current, {
+      attributionControl: true,
+      scrollWheelZoom: false,
+      zoomControl: true
+    }).setView([RESTAURANT_COORDINATES.lat, RESTAURANT_COORDINATES.lon], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    const layerGroup = L.layerGroup().addTo(map);
+    mapRef.current = map;
+    layerGroupRef.current = layerGroup;
+
+    window.setTimeout(() => map.invalidateSize(), 80);
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      layerGroupRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const layerGroup = layerGroupRef.current;
+    if (!map || !layerGroup) return;
+
+    layerGroup.clearLayers();
+
+    const restaurantLatLng: L.LatLngExpression = [RESTAURANT_COORDINATES.lat, RESTAURANT_COORDINATES.lon];
+    const restaurantMarker = L.circleMarker(restaurantLatLng, {
+      color: '#fc2d04',
+      fillColor: '#fc2d04',
+      fillOpacity: 1,
+      radius: 8,
+      weight: 3
+    }).bindTooltip('Restaurante');
+    restaurantMarker.addTo(layerGroup);
+
+    if (!destination) {
+      map.setView(restaurantLatLng, 15);
+      window.setTimeout(() => map.invalidateSize(), 80);
+      return;
+    }
+
+    const destinationLatLng: L.LatLngExpression = [destination.lat, destination.lon];
+    const customerMarker = L.circleMarker(destinationLatLng, {
+      color: '#ffffff',
+      fillColor: '#14942d',
+      fillOpacity: 1,
+      radius: 8,
+      weight: 3
+    }).bindTooltip('Cliente');
+    customerMarker.addTo(layerGroup);
+
+    const routeLatLngs = routeCoordinates?.length
+      ? routeCoordinates.map((point) => [point.lat, point.lon] as L.LatLngExpression)
+      : [restaurantLatLng, destinationLatLng];
+
+    const routeLine = L.polyline(routeLatLngs, {
+      color: '#fc2d04',
+      lineCap: 'round',
+      lineJoin: 'round',
+      opacity: 0.92,
+      weight: 5
+    });
+    routeLine.addTo(layerGroup);
+
+    map.fitBounds(routeLine.getBounds().extend(destinationLatLng).extend(restaurantLatLng), {
+      maxZoom: 16,
+      padding: [24, 24]
+    });
+    window.setTimeout(() => map.invalidateSize(), 80);
+  }, [destination, routeCoordinates]);
+
+  return <div className="absolute inset-0 h-full w-full" ref={containerRef} />;
 }
 
 function ServiceTypeCard({
@@ -311,8 +410,6 @@ function DeliveryAddressCard({
   setReference: (reference: string) => void;
   suggestions: DeliverySuggestion[];
 }) {
-  const mapUrl = createMapEmbedUrl(quote.coordinates);
-
   return (
     <section className="mt-3 overflow-hidden rounded-2xl border border-[#eee9e5] bg-white p-3">
       <div className="mb-3 grid gap-3">
@@ -384,13 +481,10 @@ function DeliveryAddressCard({
       </div>
 
       <div className="relative h-[230px] overflow-hidden rounded-2xl border border-[#eee9e5] bg-[#eef0eb]">
-        <iframe
-          className="absolute inset-0 h-full w-full border-0"
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          src={mapUrl}
-          title="Mapa de direccion de entrega en OpenStreetMap"
-        />
+        <DeliveryRouteMap destination={quote.coordinates} routeCoordinates={quote.routeCoordinates} />
+        <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-black text-[#252832] shadow-[0_8px_20px_rgba(15,23,42,0.12)]">
+          Ruta restaurante - cliente
+        </div>
       </div>
 
       <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-[#eee9e5] bg-white p-3">
@@ -510,6 +604,7 @@ export function OrderPage() {
             distanceKm: route.distanceKm,
             durationMin: route.durationMin,
             fee: route.fee,
+            routeCoordinates: route.routeCoordinates,
             status: 'ready',
             trafficLabel: route.trafficLabel
           });
@@ -538,6 +633,7 @@ export function OrderPage() {
       distanceKm: route.distanceKm,
       durationMin: route.durationMin,
       fee: route.fee,
+      routeCoordinates: route.routeCoordinates,
       status: 'ready',
       trafficLabel: route.trafficLabel
     });
