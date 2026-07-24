@@ -39,8 +39,6 @@ const orderStyles = {
   content: 'mx-auto flex max-w-[520px] flex-col gap-3',
   card: 'order-white-card rounded-[18px] border border-[#e9e5e1] bg-white shadow-[0_18px_42px_rgba(15,23,42,0.06)]',
   softCard: 'order-white-card rounded-[18px] border border-[#eee9e5] bg-white shadow-[0_14px_36px_rgba(15,23,42,0.05)]',
-  eyebrow: 'text-[11px] font-black uppercase leading-none tracking-[0.16em] text-accent',
-  title: 'text-2xl font-black leading-7 text-[#252832]',
   body: 'text-xs font-medium leading-5 text-[#737987]',
   label: 'text-sm font-black leading-5 text-[#252832]',
   smallLabel: 'text-[11px] font-black uppercase leading-4 tracking-[0.16em] text-[#252832]',
@@ -48,8 +46,6 @@ const orderStyles = {
     'inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-accent bg-accent/5 px-3 text-[11px] font-black text-accent',
   quietPill:
     'inline-flex h-8 items-center justify-center rounded-full bg-[#f2f2f1] px-3 text-[11px] font-bold text-[#656b76]',
-  greenPill:
-    'inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-[#e9f8e8] px-3 text-[11px] font-black text-[#14942d]',
   quantityButton:
     'grid size-9 place-items-center rounded-full border border-accent bg-white text-accent transition hover:bg-accent hover:text-white',
   quantityShell:
@@ -68,12 +64,6 @@ function getItemUnitPrice(item: { price: number; selectedAdditions?: { price: nu
 
 function compactAdditions(items: unknown): DishAddition[] {
   return Array.isArray(items) ? (items as DishAddition[]) : [];
-}
-
-function formatElapsed(seconds: number) {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `00:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
 function formatOrderAge(createdAt?: string) {
@@ -149,7 +139,6 @@ export function OrderPage() {
   const [error, setError] = useState('');
   const [confirmNameOpen, setConfirmNameOpen] = useState(false);
   const [orderType, setOrderType] = useState<'restaurant' | 'delivery'>('restaurant');
-  const [elapsedSeconds, setElapsedSeconds] = useState(18 * 60 + 24);
   const [activeOrder, setActiveOrder] = useState<OrderRecord | null>(null);
   const [activeOrderId, setActiveOrderId] = useState(() => window.localStorage.getItem(ACTIVE_ORDER_ID) ?? '');
   const [idempotencyKey, setIdempotencyKey] = useState(() => {
@@ -169,11 +158,6 @@ export function OrderPage() {
   const deliveryFee = orderType === 'delivery' ? DELIVERY_FEE : 0;
   const total = subtotal + deliveryFee;
   const visibleOrderNumber = activeOrder?.orderNumber ?? 1;
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setElapsedSeconds((current) => current + 1), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     if (!activeOrderId) return undefined;
@@ -274,25 +258,6 @@ export function OrderPage() {
   return (
     <div className={orderStyles.shell}>
       <div className={orderStyles.content}>
-        <section className="flex items-start justify-between gap-3 px-1 py-1">
-          <div className="min-w-0">
-            <p className={orderStyles.eyebrow}>Mesa {restaurantConfig.tableNumber}</p>
-            <h1 className={orderStyles.title}>Pedido</h1>
-            <p className={orderStyles.body}>Administras este pedido</p>
-          </div>
-          <div className="shrink-0 text-right">
-            <span className={orderStyles.greenPill}>
-              <span className="size-1.5 rounded-full bg-[#14942d]" />
-              Mesa activa
-            </span>
-            <p className="mt-2 text-xs font-medium text-[#737987]">Tiempo en mesa</p>
-            <p className="mt-0.5 text-xs font-black text-accent">
-              <Clock3 className="mr-1 inline size-3.5 align-[-2px]" />
-              {formatElapsed(elapsedSeconds)}
-            </p>
-          </div>
-        </section>
-
         <section className={`flex items-center justify-between gap-3 p-4 ${orderStyles.card}`}>
           <div className="flex min-w-0 items-center gap-4">
             <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent/10 text-accent">
