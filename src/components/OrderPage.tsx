@@ -309,10 +309,10 @@ export function OrderPage() {
           </span>
         </section>
 
-        <section className={`grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center ${orderStyles.softCard}`}>
-          <div>
-            <p className={orderStyles.label}>Tipo de pedido</p>
-            <p className={orderStyles.body}>Selecciona como se servira este pedido</p>
+        <section className={`grid gap-3 p-4 ${orderStyles.softCard}`}>
+          <div className="min-w-0">
+            <p className={orderStyles.label}>Servicio</p>
+            <p className={orderStyles.body}>Elige si lo recibes en mesa o a domicilio.</p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -321,7 +321,7 @@ export function OrderPage() {
               type="button"
             >
               <Utensils className="size-4" />
-              Comer en restaurante
+              En mesa
             </button>
             <button
               className={orderType === 'delivery' ? orderStyles.redPill : 'inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-[#eee9e5] bg-white px-3 text-[11px] font-bold text-[#505662]'}
@@ -498,31 +498,32 @@ export function OrderPage() {
 
             {error ? <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold leading-6 text-red-700">{error}</p> : null}
 
-            <div className="mt-4 grid grid-cols-[1fr_1.28fr] gap-3">
-              <button
-                className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl border border-dashed border-[#e2ddd8] bg-white text-xs font-black text-accent transition hover:border-accent/50"
-                onClick={() => navigate('/menu')}
-                type="button"
-              >
-                <Plus className="size-4" />
-                Agregar producto
-              </button>
-              <div className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-accent/25 bg-white p-2">
-                <div className="grid grid-cols-3 gap-2 pl-1">
-                  <div>
-                    <p className="text-[11px] font-medium text-[#737987]">Subtotal</p>
-                    <p className="text-xs font-bold text-[#252832]">{formatCurrency(subtotal)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-medium text-[#737987]">Envio</p>
-                    <p className="text-xs font-bold text-[#252832]">{formatCurrency(deliveryFee)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-medium text-[#737987]">Total</p>
-                    <p className="text-sm font-black text-accent">{formatCurrency(total)}</p>
-                  </div>
+            <div className="mt-4 rounded-2xl border border-accent/25 bg-white p-3">
+              <div className="grid min-w-0 grid-cols-3 gap-2">
+                <div>
+                  <p className="text-[11px] font-medium text-[#737987]">Subtotal</p>
+                  <p className="text-xs font-bold text-[#252832]">{formatCurrency(subtotal)}</p>
                 </div>
-                <button className={orderStyles.primaryButton} disabled={sending} onClick={() => setConfirmNameOpen(true)} type="button">
+                <div>
+                  <p className="text-[11px] font-medium text-[#737987]">Envio</p>
+                  <p className="text-xs font-bold text-[#252832]">{formatCurrency(deliveryFee)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium text-[#737987]">Total</p>
+                  <p className="text-sm font-black text-accent">{formatCurrency(total)}</p>
+                </div>
+              </div>
+
+              <div className="mt-3 grid gap-2 min-[390px]:grid-cols-[minmax(0,0.95fr)_minmax(0,1.2fr)]">
+                <button
+                  className="inline-flex h-12 min-w-0 items-center justify-center gap-2 rounded-2xl border border-dashed border-[#e2ddd8] bg-white px-2 text-xs font-black text-accent transition hover:border-accent/50"
+                  onClick={() => navigate('/menu')}
+                  type="button"
+                >
+                  <Plus className="size-4 shrink-0" />
+                  <span className="truncate">Agregar producto</span>
+                </button>
+                <button className={`order-submit-button ${orderStyles.primaryButton}`} disabled={sending} onClick={() => setConfirmNameOpen(true)} type="button">
                   {sending ? (
                     <>
                       <Clock3 className="size-5 animate-pulse" />

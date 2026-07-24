@@ -423,6 +423,11 @@ textarea {
   stroke: rgb(var(--color-primary-rgb)) !important;
 }
 
+.order-page-shell .order-submit-button {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
 .order-page-shell .order-white-card,
 .order-page-shell [class*="border-[#eee9e5]"],
 .order-page-shell [class*="border-[#e9e5e1]"] {
