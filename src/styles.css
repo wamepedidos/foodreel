@@ -168,7 +168,8 @@ textarea {
 }
 
 .bottom-nav-shell {
-  background: rgba(0, 0, 0, 0.5) !important;
+  z-index: 90 !important;
+  background: rgba(0, 0, 0, 0.88) !important;
   border-color: rgba(255, 255, 255, 0.26) !important;
   color: #fff !important;
   text-shadow: none;
@@ -448,4 +449,20 @@ textarea {
 .order-page-shell [class*="bg-[#e9f8e8]"],
 .order-page-shell [class*="bg-[#eaf7ec]"] {
   background-color: #e9f8e8 !important;
+}
+
+.delivery-route-map {
+  isolation: isolate;
+}
+
+.delivery-route-map .leaflet-container,
+.delivery-route-map .leaflet-pane,
+.delivery-route-map .leaflet-top,
+.delivery-route-map .leaflet-bottom,
+.delivery-route-map .leaflet-control-container {
+  z-index: 0 !important;
+}
+
+.delivery-route-map .leaflet-control {
+  z-index: 1 !important;
 }

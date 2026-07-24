@@ -504,9 +504,9 @@ function DeliveryAddressCard({
         </div>
       </div>
 
-      <div className="relative h-[230px] overflow-hidden rounded-2xl border border-[#eee9e5] bg-[#eef0eb]">
+      <div className="delivery-route-map relative isolate z-0 h-[230px] overflow-hidden rounded-2xl border border-[#eee9e5] bg-[#eef0eb]">
         <DeliveryRouteMap destination={quote.coordinates} routeCoordinates={quote.routeCoordinates} />
-        <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-black text-[#252832] shadow-[0_8px_20px_rgba(15,23,42,0.12)]">
+        <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-black text-[#252832] shadow-[0_8px_20px_rgba(15,23,42,0.12)]">
           Ruta restaurante - cliente
         </div>
       </div>
