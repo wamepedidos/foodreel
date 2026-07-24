@@ -64,9 +64,44 @@ function compactAdditions(items: unknown): DishAddition[] {
   return Array.isArray(items) ? (items as DishAddition[]) : [];
 }
 
+function ServiceTypeCard({
+  orderType,
+  setOrderType
+}: {
+  orderType: 'restaurant' | 'delivery';
+  setOrderType: (orderType: 'restaurant' | 'delivery') => void;
+}) {
+  return (
+    <section className="mt-4 rounded-2xl border border-[#eee9e5] bg-white p-3">
+      <div className="min-w-0">
+        <p className={orderStyles.label}>Servicio</p>
+        <p className={orderStyles.body}>Elige si lo recibes en mesa o a domicilio.</p>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button
+          className={orderType === 'restaurant' ? orderStyles.redPill : 'inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-[#eee9e5] bg-white px-3 text-[11px] font-bold text-[#505662]'}
+          onClick={() => setOrderType('restaurant')}
+          type="button"
+        >
+          <Utensils className="size-4" />
+          En mesa
+        </button>
+        <button
+          className={orderType === 'delivery' ? orderStyles.redPill : 'inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-[#eee9e5] bg-white px-3 text-[11px] font-bold text-[#505662]'}
+          onClick={() => setOrderType('delivery')}
+          type="button"
+        >
+          <Bike className="size-4" />
+          Domicilio
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function DeliveryAddressCard() {
   return (
-    <section className={`overflow-hidden p-4 ${orderStyles.card}`}>
+    <section className="mt-3 overflow-hidden rounded-2xl border border-[#eee9e5] bg-white p-3">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className={orderStyles.label}>Direccion de entrega</p>
@@ -248,33 +283,6 @@ export function OrderPage() {
   return (
     <div className={orderStyles.shell}>
       <div className={orderStyles.content}>
-        <section className={`grid gap-3 p-4 ${orderStyles.softCard}`}>
-          <div className="min-w-0">
-            <p className={orderStyles.label}>Servicio</p>
-            <p className={orderStyles.body}>Elige si lo recibes en mesa o a domicilio.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              className={orderType === 'restaurant' ? orderStyles.redPill : 'inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-[#eee9e5] bg-white px-3 text-[11px] font-bold text-[#505662]'}
-              onClick={() => setOrderType('restaurant')}
-              type="button"
-            >
-              <Utensils className="size-4" />
-              En mesa
-            </button>
-            <button
-              className={orderType === 'delivery' ? orderStyles.redPill : 'inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-[#eee9e5] bg-white px-3 text-[11px] font-bold text-[#505662]'}
-              onClick={() => setOrderType('delivery')}
-              type="button"
-            >
-              <Bike className="size-4" />
-              Domicilio
-            </button>
-          </div>
-        </section>
-
-        {orderType === 'delivery' ? <DeliveryAddressCard /> : null}
-
         {items.length ? (
           <section className={`p-4 ${orderStyles.card}`}>
             <div className="mb-4 flex items-start justify-between gap-3">
@@ -434,6 +442,10 @@ export function OrderPage() {
                 value={customerNotes}
               />
             </label>
+
+            <ServiceTypeCard orderType={orderType} setOrderType={setOrderType} />
+
+            {orderType === 'delivery' ? <DeliveryAddressCard /> : null}
 
             {error ? <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold leading-6 text-red-700">{error}</p> : null}
 
