@@ -1,7 +1,9 @@
 function getMenu(payload) {
   var restaurantId = payload.restaurantId || APP_CONFIG.DEFAULT_RESTAURANT_ID;
+  var limit = Math.min(Math.max(toNumber(payload.limit) || 10, 1), 10);
+  var offset = Math.max(toNumber(payload.offset) || 0, 0);
   var cache = CacheService.getScriptCache();
-  var cacheKey = 'menu:' + restaurantId;
+  var cacheKey = 'menu:v2:' + restaurantId + ':offset:' + offset + ':limit:' + limit;
   var cached = cache.get(cacheKey);
   if (cached) return JSON.parse(cached);
   var restaurant = allRows('RESTAURANTS').filter(function(row) {
@@ -12,12 +14,26 @@ function getMenu(payload) {
   }).sort(function(a, b) {
     return toNumber(a.sortOrder) - toNumber(b.sortOrder);
   }).map(categoryToFrontend);
-  var dishes = allRows('DISHES').filter(function(row) {
+  var activeDishes = allRows('DISHES').filter(function(row) {
     return row.restaurantId === restaurantId && row.status === 'active';
   }).sort(function(a, b) {
     return toNumber(a.sortOrder) - toNumber(b.sortOrder);
-  }).map(dishToPublic);
-  var result = { restaurant: restaurant, categories: categories, dishes: dishes };
+  });
+  var pageRows = activeDishes.slice(offset, offset + limit);
+  var dishes = pageRows.map(dishToPublic);
+  var nextOffset = offset + dishes.length;
+  var result = {
+    restaurant: restaurant,
+    categories: categories,
+    dishes: dishes,
+    pagination: {
+      hasMore: nextOffset < activeDishes.length,
+      limit: limit,
+      nextOffset: nextOffset,
+      offset: offset,
+      total: activeDishes.length
+    }
+  };
   cache.put(cacheKey, JSON.stringify(result), APP_CONFIG.CACHE_MENU_SECONDS);
   return result;
 }
@@ -33,6 +49,19 @@ function getDish(payload) {
   requireFields(payload, ['dishId']);
   var dish = findById('DISHES', payload.dishId);
   return dish ? dishToAdmin(dish) : null;
+}
+
+function getDishBadgeMetadata(payload) {
+  requireFields(payload, ['restaurantId', 'dishIds']);
+  var requestedIds = Array.isArray(payload.dishIds) ? payload.dishIds.slice(0, 10).map(String) : [];
+  var requestedLookup = {};
+  requestedIds.forEach(function(id) {
+    requestedLookup[id] = true;
+  });
+
+  return allRows('DISHES').filter(function(row) {
+    return row.restaurantId === payload.restaurantId && requestedLookup[row.id];
+  }).map(dishBadgeMetadataToFrontend);
 }
 
 function getDishes(payload) {
@@ -101,6 +130,7 @@ function registerDishAddedToOrder(payload) {
 
 function invalidateMenu(restaurantId) {
   CacheService.getScriptCache().remove('menu:' + restaurantId);
+  CacheService.getScriptCache().remove('menu:v2:' + restaurantId + ':offset:0:limit:10');
 }
 
 function dishFromFrontend(input, createdAt) {
@@ -178,6 +208,22 @@ function dishToPublic(row) {
     commentsCount: toNumber(row.commentsCount),
     sharesCount: toNumber(row.sharesCount),
     addedToOrderCount: toNumber(row.addedToOrderCount)
+  };
+}
+
+function dishBadgeMetadataToFrontend(row) {
+  return {
+    id: row.id,
+    tag: parseJson(row.featuresJson, [])[0],
+    features: parseJson(row.featuresJson, []),
+    allergens: parseJson(row.allergensJson, []),
+    servingSizes: parseJson(row.servingSizesJson, []),
+    servingDescription: row.servingDescription,
+    spicyLevel: toNumber(row.spicyLevel),
+    isVegan: toBool(row.isVegan),
+    isVegetarian: toBool(row.isVegetarian),
+    isGlutenFree: toBool(row.isGlutenFree),
+    dietaryNotes: row.dietaryNotes
   };
 }
 

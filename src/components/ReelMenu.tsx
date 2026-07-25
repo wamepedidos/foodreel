@@ -7,7 +7,17 @@ import { LoadingSkeleton } from './LoadingSkeleton';
 import { ReelDishCard } from './ReelDishCard';
 import { WaiterCallButton } from './WaiterCallButton';
 
-export function ReelMenu({ dishes }: { dishes: Dish[] }) {
+export function ReelMenu({
+  dishes,
+  hasMore,
+  loadingMore,
+  onLoadMore
+}: {
+  dishes: Dish[];
+  hasMore: boolean;
+  loadingMore: boolean;
+  onLoadMore: () => void;
+}) {
   const [loading, setLoading] = useState(() => !hasReelMenuLoadedOnce());
   const storedActiveDishId = useMenuStore((state) => state.activeDishId);
   const setStoredActiveDishId = useMenuStore((state) => state.setActiveDishId);
@@ -123,6 +133,14 @@ export function ReelMenu({ dishes }: { dishes: Dish[] }) {
 
     return () => observer.disconnect();
   }, [dishes, loading, setSelectedCategory, setStoredActiveDishId]);
+
+  useEffect(() => {
+    if (loading || !hasMore || loadingMore || activeIndex < dishes.length - 3) {
+      return;
+    }
+
+    onLoadMore();
+  }, [activeIndex, dishes.length, hasMore, loading, loadingMore, onLoadMore]);
 
   if (loading) {
     return (

@@ -64,3 +64,14 @@ export async function deleteMedia(mediaId: string, restaurantId = restaurantConf
 export async function getMediaUrl(fileId: string) {
   return apiRequest<{ fileId: string; url: string }, { fileId: string }>('getMediaUrl', { fileId });
 }
+
+export async function getMediaDataUrl(fileUrl: string, restaurantId = restaurantConfig.restaurantId) {
+  return apiRequest<
+    { dataUrl: string; fileName: string; mimeType: string },
+    { fileUrl: string; restaurantId: string }
+  >(
+    'getMediaDataUrl',
+    { fileUrl, restaurantId },
+    { timeoutMs: 60000 }
+  );
+}

@@ -6,6 +6,7 @@ import type {
   AdminDishesResult,
   CategoryRecord,
   DashboardMetricsResult,
+  DishBadgeMetadata,
   MenuPayload,
   MenuResult,
   RegisterSharePayload,
@@ -18,9 +19,10 @@ import { uploadMediaFile } from './mediaService';
 
 const listeners = new Set<(dishes: AdminDish[]) => void>();
 let dishesCache: AdminDish[] = [];
-let menuCache: { data: MenuResult; expiresAt: number } | null = null;
+let menuCache: { data: MenuResult; expiresAt: number; limit: number; offset: number } | null = null;
 let dashboardCache: DashboardMetricsResult | null = null;
 export const dishCommentsCountChangedEvent = 'foodreel:dish-comments-count';
+export const MENU_PAGE_SIZE = 10;
 
 const categoryFallbacks: Record<string, string> = {
   Parrilla: 'Plato fuerte',
@@ -171,29 +173,95 @@ export function getDishesSnapshot() {
   return dishesCache.length ? dishesCache : getSeedDishes();
 }
 
-export async function getMenu(options: { forceRefresh?: boolean } = {}) {
+export async function getMenu(options: { forceRefresh?: boolean; limit?: number; offset?: number } = {}) {
+  const limit = Math.min(Math.max(Math.round(options.limit ?? MENU_PAGE_SIZE), 1), MENU_PAGE_SIZE);
+  const offset = Math.max(Math.round(options.offset ?? 0), 0);
   const cached = menuCache;
-  if (!options.forceRefresh && cached && cached.expiresAt > Date.now()) {
+  if (!options.forceRefresh && cached && cached.limit === limit && cached.offset === offset && cached.expiresAt > Date.now()) {
     return cached.data;
   }
 
   const data = await apiRequest<MenuResult, MenuPayload>('getMenu', {
+    limit,
+    offset,
     restaurantId: restaurantConfig.restaurantId
   });
 
-  const adminResult = await apiRequest<AdminDishesResult, { restaurantId: string }>('getDishes', {
-    restaurantId: restaurantConfig.restaurantId
-  });
-  const activeDishes = adminResult.dishes
-    .filter((dish) => dish.status === 'active')
-    .sort((left, right) => Number(left.sortOrder) - Number(right.sortOrder));
-  const baseDishes = activeDishes.length ? activeDishes.map(adminDishToDish) : data.dishes;
-  const dishesWithCommentCounts = await hydrateDishCommentCounts(baseDishes);
+  const badgeMetadata = await getDishBadgeMetadata(data.dishes);
+  const dishesWithCommentCounts = await hydrateDishCommentCounts(data.dishes.map((dish) => enrichPublicDish(dish, badgeMetadata.get(dish.id))));
   const enrichedData = { ...data, dishes: dishesWithCommentCounts };
 
-  menuCache = { data: enrichedData, expiresAt: Date.now() + 60_000 };
-  notifyDishes(adminResult.dishes);
+  if (offset === 0) {
+    menuCache = { data: enrichedData, expiresAt: Date.now() + 60_000, limit, offset };
+  }
+
   return enrichedData;
+}
+
+async function getDishBadgeMetadata(dishes: Dish[]) {
+  const dishIds = dishes.map((dish) => dish.id).filter(Boolean).slice(0, MENU_PAGE_SIZE);
+  if (!dishIds.length) return new Map<string, DishBadgeMetadata>();
+
+  try {
+    const metadata = await apiRequest<DishBadgeMetadata[], { restaurantId: string; dishIds: string[] }>('getDishBadgeMetadata', {
+      dishIds,
+      restaurantId: restaurantConfig.restaurantId
+    });
+    return new Map(metadata.map((item) => [item.id, item]));
+  } catch {
+    return getDishBadgeMetadataFallback(dishIds);
+  }
+}
+
+async function getDishBadgeMetadataFallback(dishIds: string[]) {
+  const results = await Promise.allSettled(
+    dishIds.map(async (dishId) => apiRequest<AdminDish | null, { dishId: string }>('getDish', { dishId }))
+  );
+  const metadata = new Map<string, DishBadgeMetadata>();
+
+  results.forEach((result) => {
+    if (result.status !== 'fulfilled' || !result.value) return;
+    const dish = adminDishToDish(result.value);
+    metadata.set(dish.id, {
+      allergens: dish.allergens,
+      dietaryNotes: dish.dietaryNotes,
+      features: dish.features,
+      id: dish.id,
+      isGlutenFree: dish.isGlutenFree,
+      isVegan: dish.isVegan,
+      isVegetarian: dish.isVegetarian,
+      servingDescription: dish.servingDescription,
+      servingSizes: dish.servingSizes,
+      spicyLevel: dish.spicyLevel,
+      tag: dish.tag
+    });
+  });
+
+  return metadata;
+}
+
+function enrichPublicDish(dish: Dish, metadata?: DishBadgeMetadata): Dish {
+  const fallbackDish = demoDishes.find((item) => item.id === dish.id);
+  const features = normalizeStringArray(dish.features).length ? normalizeStringArray(dish.features) : normalizeStringArray(metadata?.features);
+  const fallbackFeatures = normalizeStringArray(fallbackDish?.features);
+  const allergens = normalizeStringArray(dish.allergens).length ? normalizeStringArray(dish.allergens) : normalizeStringArray(metadata?.allergens);
+  const servingSizes = normalizeNumberArray(dish.servingSizes).length ? normalizeNumberArray(dish.servingSizes) : normalizeNumberArray(metadata?.servingSizes);
+  const tag = dish.tag ?? metadata?.tag ?? (features[0] as Dish['tag'] | undefined) ?? fallbackDish?.tag;
+  const nextFeatures = features.length ? features : fallbackFeatures.length ? fallbackFeatures : tag ? [tag] : [];
+
+  return {
+    ...dish,
+    allergens,
+    dietaryNotes: dish.dietaryNotes || metadata?.dietaryNotes,
+    features: nextFeatures,
+    isGlutenFree: dish.isGlutenFree ?? metadata?.isGlutenFree,
+    isVegan: dish.isVegan ?? metadata?.isVegan,
+    isVegetarian: dish.isVegetarian ?? metadata?.isVegetarian,
+    servingDescription: dish.servingDescription || metadata?.servingDescription,
+    servingSizes,
+    spicyLevel: dish.spicyLevel || metadata?.spicyLevel,
+    tag: tag ?? (nextFeatures[0] as Dish['tag'] | undefined)
+  };
 }
 
 async function hydrateDishCommentCounts(dishes: Dish[]) {
@@ -256,11 +324,16 @@ export function subscribeToDishes(listener: (dishes: AdminDish[]) => void) {
   };
 }
 
-export async function uploadDishMedia(files: File[], onProgress?: (progress: number) => void): Promise<DishMediaItem[]> {
+export async function uploadDishMedia(
+  files: File[],
+  onProgress?: (progress: number) => void,
+  options: { dishId?: string } = {}
+): Promise<DishMediaItem[]> {
   const uploaded: DishMediaItem[] = [];
   for (const [index, file] of files.entries()) {
     onProgress?.(Math.round((index / Math.max(1, files.length)) * 85));
     const record = await uploadMediaFile(file, {
+      dishId: options.dishId,
       isPrimary: index === 0,
       sortOrder: index + 1
     });

@@ -1,13 +1,28 @@
+import { restaurantConfig } from '../config/restaurant';
+
 export function LoadingSkeleton() {
+  const logoSrc = restaurantConfig.logoSrc;
+
   return (
-    <div className="h-full snap-start px-3 py-4">
-      <div className="relative h-full overflow-hidden rounded-[28px] border border-white/10 bg-card">
-        <div className="absolute inset-0 animate-pulse bg-gradient-to-b from-white/10 via-white/5 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 space-y-3 p-5">
-          <div className="h-5 w-28 rounded-full bg-white/10" />
-          <div className="h-8 w-64 max-w-full rounded-full bg-white/10" />
-          <div className="h-4 w-48 rounded-full bg-white/10" />
-          <div className="h-12 rounded-2xl bg-white/10" />
+    <div className="grid h-full snap-start place-items-center bg-base px-6 text-center">
+      <div className="grid justify-items-center gap-5">
+        <div className="grid size-24 place-items-center rounded-[24px] border border-white/12 bg-paper p-3 shadow-[0_22px_70px_rgba(0,0,0,0.34)]">
+          {logoSrc ? (
+            <img alt={`${restaurantConfig.restaurantName} logo`} className="size-full object-contain" src={logoSrc} />
+          ) : (
+            <span className="text-4xl font-black text-accent">{restaurantConfig.logoText}</span>
+          )}
+        </div>
+
+        <div>
+          <p className="text-sm font-black text-white">{restaurantConfig.restaurantName}</p>
+          <p className="mt-1 text-xs font-medium text-muted">Cargando carta</p>
+        </div>
+
+        <div aria-label="Cargando" className="foodreel-dot-loader" role="status">
+          <span />
+          <span />
+          <span />
         </div>
       </div>
     </div>

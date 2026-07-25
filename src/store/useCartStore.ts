@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { dishes as demoDishes } from '../data/dishes';
 import type { Dish, DishAddition } from '../types';
 
 type CartItem = {
@@ -8,6 +9,7 @@ type CartItem = {
   name: string;
   price: number;
   image: string;
+  video?: string;
   ingredients: string[];
   removableIngredients: string[];
   additions: DishAddition[];
@@ -73,6 +75,7 @@ function normalizeCartItems(value: unknown): CartItem[] {
     const ingredients = normalizeStringList(raw.ingredients);
     const removableIngredients = normalizeStringList(raw.removableIngredients);
     const additions = normalizeAdditions(raw.additions);
+    const fallbackDish = demoDishes.find((dish) => dish.id === dishId);
     const selectedAdditions = normalizeAdditions(raw.selectedAdditions).filter((addition) =>
       additions.some((availableAddition) => availableAddition.id === addition.id || availableAddition.name === addition.name)
     );
@@ -82,7 +85,8 @@ function normalizeCartItems(value: unknown): CartItem[] {
         cartItemId: typeof raw.cartItemId === 'string' && raw.cartItemId.trim() ? raw.cartItemId : createCartItemId(dishId),
         additions,
         dishId,
-        image: typeof raw.image === 'string' ? raw.image : '',
+        image: typeof raw.image === 'string' && raw.image ? raw.image : fallbackDish?.image ?? '',
+        video: typeof raw.video === 'string' && raw.video ? raw.video : fallbackDish?.video,
         ingredients,
         name: typeof raw.name === 'string' && raw.name.trim() ? raw.name : 'Producto',
         price: Number(raw.price || 0),
@@ -107,7 +111,7 @@ export const useCartStore = create<CartState>()(
           if (existing) {
             return {
               items: state.items.map((item) =>
-                item.dishId === dish.id ? { ...item, quantity: item.quantity + 1 } : item
+                item.dishId === dish.id ? { ...item, image: dish.image || item.image, quantity: item.quantity + 1, video: dish.video ?? item.video } : item
               ),
               selectedCartItemId: existing.cartItemId,
               selectedDishId: dish.id
@@ -124,6 +128,7 @@ export const useCartStore = create<CartState>()(
                 additions: (dish.additions ?? []).filter((addition) => addition.available),
                 dishId: dish.id,
                 image: dish.image,
+                video: dish.video,
                 ingredients: dish.ingredients,
                 name: dish.name,
                 price: dish.price,
@@ -195,7 +200,7 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'foodreel-cart',
-      version: 4,
+      version: 5,
       migrate: (persistedState) => {
         const state = persistedState && typeof persistedState === 'object' ? (persistedState as Partial<CartState>) : {};
         const items = normalizeCartItems(state.items);

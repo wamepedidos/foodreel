@@ -135,13 +135,27 @@ export type UpdateOrderStatusPayload = {
 
 export type MenuPayload = {
   restaurantId: string;
+  limit?: number;
+  offset?: number;
 };
 
 export type MenuResult = {
   restaurant: RestaurantRecord | null;
   categories: CategoryRecord[];
   dishes: Dish[];
+  pagination?: {
+    hasMore: boolean;
+    limit: number;
+    nextOffset: number;
+    offset: number;
+    total: number;
+  };
 };
+
+export type DishBadgeMetadata = Pick<
+  Dish,
+  'id' | 'tag' | 'features' | 'allergens' | 'servingSizes' | 'servingDescription' | 'spicyLevel' | 'isVegan' | 'isVegetarian' | 'isGlutenFree' | 'dietaryNotes'
+>;
 
 export type AdminDishesResult = {
   dishes: AdminDish[];

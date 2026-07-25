@@ -5,6 +5,7 @@ function routeRequest(request) {
   var routes = {
     getRestaurant: function() { return findById('RESTAURANTS', payload.restaurantId || APP_CONFIG.DEFAULT_RESTAURANT_ID); },
     getMenu: function() { return getMenu(payload); },
+    getDishBadgeMetadata: function() { return getDishBadgeMetadata(payload); },
     getCategories: function() { return getCategories(payload); },
     getDish: function() { return getDish(payload); },
     createOrder: function() { return createOrder(payload, context); },
@@ -33,6 +34,7 @@ function routeRequest(request) {
     uploadDishMedia: function() { return uploadMedia(payload, context); },
     deleteMedia: function() { return deleteMedia(payload, context); },
     getMediaUrl: function() { return getMediaUrl(payload); },
+    getMediaDataUrl: function() { return getMediaDataUrl(payload); },
     getEmployees: function() { return getEmployees(payload, context); },
     createEmployee: function() { return createEmployee(payload, context); },
     updateEmployee: function() { return updateEmployee(payload, context); },

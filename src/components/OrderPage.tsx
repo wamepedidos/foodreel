@@ -58,6 +58,13 @@ type DeliverySuggestion = {
   id: string;
 };
 
+type StoredDeliveryState = {
+  address: string;
+  orderType: 'restaurant' | 'delivery';
+  quote: DeliveryQuote;
+  reference: string;
+};
+
 const orderStyles = {
   shell: 'order-page-shell h-full overflow-y-auto bg-[#f7f7f6] px-4 pb-[116px] pt-4 text-[#252832]',
   content: 'mx-auto flex max-w-[520px] flex-col gap-3',
@@ -90,32 +97,123 @@ function compactAdditions(items: unknown): DishAddition[] {
   return Array.isArray(items) ? (items as DishAddition[]) : [];
 }
 
-function readStoredDeliveryAddress() {
-  if (typeof window === 'undefined') return { address: '', reference: '' };
+function hasProductImage(src?: string) {
+  return Boolean(src && !src.includes('/brand/foodreel-logo'));
+}
+
+function OrderItemMedia({ image, name, video }: { image?: string; name: string; video?: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!failed && hasProductImage(image)) {
+    return <img alt={name} className="size-[82px] rounded-2xl bg-[#f2f2f1] object-cover" onError={() => setFailed(true)} src={image} />;
+  }
+
+  if (!failed && video) {
+    return (
+      <video
+        aria-label={name}
+        autoPlay
+        className="size-[82px] rounded-2xl bg-[#f2f2f1] object-cover"
+        loop
+        muted
+        onError={() => setFailed(true)}
+        playsInline
+        poster={hasProductImage(image) ? image : undefined}
+        preload="metadata"
+        src={video}
+      />
+    );
+  }
+
+  return (
+    <div className="grid size-[82px] place-items-center rounded-2xl bg-[#f2f2f1] text-accent">
+      <Utensils className="size-7" />
+    </div>
+  );
+}
+
+function parseStoredCoordinates(value: unknown): DeliveryCoordinates | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+
+  const coordinates = value as Partial<DeliveryCoordinates>;
+  return typeof coordinates.lat === 'number' && Number.isFinite(coordinates.lat) && typeof coordinates.lon === 'number' && Number.isFinite(coordinates.lon)
+    ? { lat: coordinates.lat, lon: coordinates.lon }
+    : undefined;
+}
+
+function parseStoredRouteCoordinates(value: unknown): DeliveryCoordinates[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const coordinates = value.flatMap((item) => {
+    const coordinate = parseStoredCoordinates(item);
+    return coordinate ? [coordinate] : [];
+  });
+  return coordinates.length ? coordinates : undefined;
+}
+
+function parseStoredNumber(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function readStoredDeliveryAddress(): StoredDeliveryState {
+  if (typeof window === 'undefined') return { address: '', orderType: 'restaurant', quote: { status: 'idle' }, reference: '' };
 
   try {
     const stored = window.localStorage.getItem(DELIVERY_ADDRESS_STORAGE_KEY);
-    if (!stored) return { address: '', reference: '' };
-    const parsed = JSON.parse(stored) as { address?: unknown; coordinates?: unknown; reference?: unknown };
-    const coordinates = parsed.coordinates as Partial<DeliveryCoordinates> | undefined;
+    if (!stored) return { address: '', orderType: 'restaurant', quote: { status: 'idle' }, reference: '' };
+
+    const parsed = JSON.parse(stored) as Record<string, unknown>;
+    const address = typeof parsed.address === 'string' ? parsed.address : '';
+    const coordinates = parseStoredCoordinates(parsed.coordinates);
+    const distanceKm = parseStoredNumber(parsed.distanceKm);
+    const durationMin = parseStoredNumber(parsed.durationMin);
+    const fee = parseStoredNumber(parsed.fee);
+    const routeCoordinates = parseStoredRouteCoordinates(parsed.routeCoordinates);
+    const savedOrderType = parsed.orderType === 'restaurant' || parsed.orderType === 'delivery' ? parsed.orderType : undefined;
+    const quoteReady = Boolean(coordinates && typeof fee === 'number' && typeof distanceKm === 'number' && typeof durationMin === 'number');
+
     return {
-      address: typeof parsed.address === 'string' ? parsed.address : '',
-      coordinates:
-        typeof coordinates?.lat === 'number' && typeof coordinates.lon === 'number'
-          ? { lat: coordinates.lat, lon: coordinates.lon }
-          : undefined,
+      address,
+      orderType: savedOrderType ?? (coordinates || address ? 'delivery' : 'restaurant'),
+      quote: coordinates
+        ? {
+            coordinates,
+            displayName: typeof parsed.displayName === 'string' ? parsed.displayName : address,
+            distanceKm,
+            durationMin,
+            fee,
+            message: quoteReady ? undefined : 'Direccion guardada. Verificando costo de envio...',
+            routeCoordinates,
+            status: quoteReady ? 'ready' : 'idle',
+            trafficLabel: typeof parsed.trafficLabel === 'string' ? parsed.trafficLabel : undefined
+          }
+        : { status: 'idle' },
       reference: typeof parsed.reference === 'string' ? parsed.reference : ''
     };
   } catch {
-    return { address: '', reference: '' };
+    return { address: '', orderType: 'restaurant', quote: { status: 'idle' }, reference: '' };
   }
 }
 
-function persistDeliveryAddress(address: string, reference: string, coordinates?: DeliveryCoordinates) {
+function persistDeliveryAddress(orderType: 'restaurant' | 'delivery', address: string, reference: string, quote: DeliveryQuote) {
   if (typeof window === 'undefined') return;
 
   try {
-    window.localStorage.setItem(DELIVERY_ADDRESS_STORAGE_KEY, JSON.stringify({ address, coordinates, reference }));
+    window.localStorage.setItem(
+      DELIVERY_ADDRESS_STORAGE_KEY,
+      JSON.stringify({
+        address,
+        coordinates: quote.coordinates,
+        displayName: quote.displayName,
+        distanceKm: quote.distanceKm,
+        durationMin: quote.durationMin,
+        fee: quote.fee,
+        orderType,
+        reference,
+        routeCoordinates: quote.routeCoordinates,
+        trafficLabel: quote.trafficLabel
+      })
+    );
   } catch {
     // The address still works for the current order when storage is unavailable.
   }
@@ -546,23 +644,14 @@ export function OrderPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [confirmNameOpen, setConfirmNameOpen] = useState(false);
-  const [orderType, setOrderType] = useState<'restaurant' | 'delivery'>('restaurant');
-  const [deliveryAddress, setDeliveryAddress] = useState(() => readStoredDeliveryAddress().address);
-  const [deliveryReference, setDeliveryReference] = useState(() => readStoredDeliveryAddress().reference);
+  const storedDeliveryState = useMemo(() => readStoredDeliveryAddress(), []);
+  const [orderType, setOrderType] = useState<'restaurant' | 'delivery'>(storedDeliveryState.orderType);
+  const [deliveryAddress, setDeliveryAddress] = useState(storedDeliveryState.address);
+  const [deliveryReference, setDeliveryReference] = useState(storedDeliveryState.reference);
   const [deliverySuggestions, setDeliverySuggestions] = useState<DeliverySuggestion[]>([]);
-  const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote>(() => {
-    const stored = readStoredDeliveryAddress();
-    return stored.coordinates
-      ? {
-          coordinates: stored.coordinates,
-          displayName: stored.address,
-          message: 'Direccion guardada. Verificando costo de envio...',
-          status: 'idle'
-        }
-      : { status: 'idle' };
-  });
+  const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote>(storedDeliveryState.quote);
   const [activeOrder, setActiveOrder] = useState<OrderRecord | null>(null);
-  const resolvedDeliveryAddressRef = useRef('');
+  const resolvedDeliveryAddressRef = useRef(storedDeliveryState.quote.coordinates ? storedDeliveryState.address : '');
   const [activeOrderId, setActiveOrderId] = useState(() => window.localStorage.getItem(ACTIVE_ORDER_ID) ?? '');
   const [idempotencyKey, setIdempotencyKey] = useState(() => {
     const existing = window.localStorage.getItem(PENDING_IDEMPOTENCY_KEY);
@@ -582,8 +671,8 @@ export function OrderPage() {
   const total = subtotal + deliveryFee;
 
   useEffect(() => {
-    persistDeliveryAddress(deliveryAddress, deliveryReference, deliveryQuote.coordinates);
-  }, [deliveryAddress, deliveryQuote.coordinates, deliveryReference]);
+    persistDeliveryAddress(orderType, deliveryAddress, deliveryReference, deliveryQuote);
+  }, [deliveryAddress, deliveryQuote, deliveryReference, orderType]);
 
   useEffect(() => {
     if (orderType !== 'delivery') {
@@ -601,7 +690,7 @@ export function OrderPage() {
       return undefined;
     }
 
-    if (trimmedAddress === resolvedDeliveryAddressRef.current && deliveryQuote.coordinates) {
+    if (trimmedAddress === resolvedDeliveryAddressRef.current && deliveryQuote.coordinates && deliveryQuote.status === 'ready') {
       return undefined;
     }
 
@@ -865,7 +954,7 @@ export function OrderPage() {
                     key={item.cartItemId}
                   >
                     <div className="grid grid-cols-[82px_1fr] gap-3">
-                      <img alt="" className="size-[82px] rounded-2xl object-cover" src={item.image} />
+                      <OrderItemMedia image={item.image} name={item.name} video={item.video} />
                       <div className="min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">

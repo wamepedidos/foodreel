@@ -11,8 +11,6 @@ import { SocialMetricsRow } from './SocialMetricsRow';
 export function GridDishCard({ dish, onFocus }: { dish: Dish; onFocus: (dishId: string) => void }) {
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [mediaLoaded, setMediaLoaded] = useState(false);
-  const [mediaFailed, setMediaFailed] = useState(false);
   const poster = dish.image.includes('foodreel-logo') ? undefined : dish.image;
 
   const openDescription = () => {
@@ -23,30 +21,20 @@ export function GridDishCard({ dish, onFocus }: { dish: Dish; onFocus: (dishId: 
   return (
     <article className="overflow-hidden rounded-[22px] border border-white/10 bg-card shadow-2xl shadow-black/25">
       <div className="relative aspect-[4/3] overflow-hidden bg-black">
-        {!mediaLoaded && !mediaFailed ? <div className="absolute inset-0 animate-pulse bg-white/10" /> : null}
-        {mediaFailed ? (
-          <div className="grid h-full place-items-center bg-gradient-to-br from-surface to-black text-xs font-bold text-muted">
-            Video no disponible
-          </div>
-        ) : (
-          <button aria-label={`Ver descripcion de ${dish.name}`} className="h-full w-full" onClick={openDescription} type="button">
-            <video
-              autoPlay
-              className={`h-full w-full object-cover transition duration-300 ${mediaLoaded ? 'opacity-100' : 'opacity-0'}`}
-              loop
-              muted
-              onCanPlay={() => setMediaLoaded(true)}
-              onError={() => setMediaFailed(true)}
-              playsInline
-              poster={poster}
-              preload="metadata"
-              src={dish.video}
-            />
-          </button>
-        )}
-        <span className="absolute bottom-2 left-2 grid size-8 place-items-center rounded-full bg-black/55 text-white backdrop-blur">
-          <Play className="size-4" fill="currentColor" />
-        </span>
+        <button aria-label={`Ver descripcion de ${dish.name}`} className="h-full w-full" onClick={openDescription} type="button">
+          {poster ? (
+            <img alt={dish.name} className="h-full w-full object-cover" src={poster} />
+          ) : (
+            <div className="grid h-full place-items-center bg-gradient-to-br from-surface to-black text-xs font-bold text-muted">
+              Sin portada
+            </div>
+          )}
+        </button>
+        {dish.video ? (
+          <span className="absolute bottom-2 left-2 grid size-8 place-items-center rounded-full bg-black/55 text-white backdrop-blur">
+            <Play className="size-4" fill="currentColor" />
+          </span>
+        ) : null}
         {dish.tag ? (
           <span className="absolute left-2 top-2 rounded-full border border-accent/35 bg-black/55 px-2.5 py-1 text-[11px] font-bold text-accent backdrop-blur">
             {dish.tag}

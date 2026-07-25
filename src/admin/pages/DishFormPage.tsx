@@ -14,11 +14,12 @@ import {
   Upload,
   Video
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { AdminDish, DishAddition, DishMediaItem, Sauce } from '../adminTypes';
 import { getInteractionRate } from '../components/DashboardComponents';
 import { createDish, getAdminDishes, getDishesSnapshot, updateDish, uploadDishMedia } from '../../services/dishesService';
+import { getMediaDataUrl } from '../../services/mediaService';
 import { restaurantConfig } from '../../config/restaurant';
 import { useToast } from '../../components/Toast';
 import { formatCurrency } from '../../utils/format';
@@ -47,6 +48,19 @@ const featureOptions = [
   'Ingredientes locales'
 ];
 const allergenOptions = ['Gluten', 'Lacteos', 'Huevo', 'Mani', 'Frutos secos', 'Mariscos', 'Pescado', 'Soya'];
+
+type PendingDishMediaFile = {
+  file: File;
+  previewUrl: string;
+};
+
+type PendingDishFiles = {
+  main?: PendingDishMediaFile;
+  gallery: PendingDishMediaFile[];
+  video?: PendingDishMediaFile;
+};
+
+const emptyPendingFiles = (): PendingDishFiles => ({ gallery: [] });
 
 function createId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -119,7 +133,7 @@ export function DishFormPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<PendingDishFiles>(() => emptyPendingFiles());
   const isEditing = Boolean(dishId);
 
   useEffect(() => {
@@ -160,20 +174,56 @@ export function DishFormPage() {
     setSaving(true);
     try {
       let payload = { ...dish, status };
-      if (pendingFiles.length) {
-        const uploaded = await uploadDishMedia(pendingFiles, setUploadProgress);
-        const images = uploaded.filter((item) => item.type === 'image');
-        const video = uploaded.find((item) => item.type === 'video');
+      const orderedPendingFiles = [
+        ...(pendingFiles.main ? [pendingFiles.main] : []),
+        ...pendingFiles.gallery,
+        ...(pendingFiles.video ? [pendingFiles.video] : [])
+      ];
+      if (orderedPendingFiles.length) {
+        const uploadedByPreviewUrl = new Map<string, DishMediaItem>();
+        const uploadRole = async (items: PendingDishMediaFile[]) => {
+          if (!items.length) return [];
+          const uploaded = await uploadDishMedia(items.map((item) => item.file), setUploadProgress, { dishId });
+          items.forEach((item, index) => {
+            const uploadedItem = uploaded[index];
+            if (uploadedItem) uploadedByPreviewUrl.set(item.previewUrl, uploadedItem);
+          });
+          return uploaded;
+        };
+        const [uploadedMain] = pendingFiles.main ? await uploadRole([pendingFiles.main]) : [];
+        const uploadedGallery = await uploadRole(pendingFiles.gallery);
+        const [uploadedVideo] = pendingFiles.video ? await uploadRole([pendingFiles.video]) : [];
+        const uploadedGalleryMain = uploadedByPreviewUrl.get(payload.mainImageUrl);
+        const uploadedVideoThumbnail = uploadedByPreviewUrl.get(payload.videoThumbnailUrl);
         payload = {
           ...payload,
-          gallery: [...payload.gallery.filter((item) => !item.url.startsWith('blob:')), ...images],
-          mainImageUrl: payload.mainImageUrl.startsWith('blob:') ? images[0]?.url ?? payload.mainImageUrl : payload.mainImageUrl,
-          videoUrl: payload.videoUrl.startsWith('blob:') ? video?.url ?? payload.videoUrl : payload.videoUrl
+          gallery: payload.gallery
+            .map((item) => {
+              const uploadedItem = uploadedByPreviewUrl.get(item.url);
+              return uploadedItem && uploadedItem.type === 'image' ? uploadedItem : item;
+            })
+            .filter((item) => !item.url.startsWith('blob:')),
+          mainImageUrl:
+            uploadedMain?.type === 'image'
+              ? uploadedMain.url
+              : payload.mainImageUrl.startsWith('blob:') && uploadedGalleryMain?.type === 'image'
+                ? uploadedGalleryMain.url
+                : payload.mainImageUrl,
+          videoThumbnailUrl:
+            uploadedMain?.type === 'image'
+              ? uploadedMain.url
+              : payload.videoThumbnailUrl.startsWith('blob:') && uploadedVideoThumbnail?.type === 'image'
+              ? uploadedVideoThumbnail.url
+              : payload.videoThumbnailUrl,
+          videoUrl: payload.videoUrl.startsWith('blob:') && uploadedVideo?.type === 'video' ? uploadedVideo.url : payload.videoUrl
         };
+        if (uploadedGallery.length && !payload.gallery.length) {
+          payload.gallery = uploadedGallery.filter((item) => item.type === 'image');
+        }
       }
       const saved = isEditing && dishId ? await updateDish(dishId, payload) : await createDish(payload);
       setDish(saved);
-      setPendingFiles([]);
+      setPendingFiles(emptyPendingFiles());
       showToast('Plato guardado correctamente');
       navigate('/admin/menu');
     } catch (caughtError) {
@@ -255,7 +305,12 @@ export function DishFormPage() {
           <DishMediaUploader
             dish={dish}
             onChange={setDish}
-            onFiles={(files) => setPendingFiles((current) => [...current, ...files])}
+            onFiles={(target, files) =>
+              setPendingFiles((current) => {
+                if (target === 'gallery') return { ...current, gallery: [...current.gallery, ...files] };
+                return { ...current, [target]: files[0] };
+              })
+            }
             progress={uploadProgress}
           />
           <DishCategorySelector dish={dish} onChange={setDish} />
@@ -363,13 +418,25 @@ export function DishMediaUploader({
 }: {
   dish: AdminDish;
   onChange: (dish: AdminDish) => void;
-  onFiles: (files: File[]) => void;
+  onFiles: (target: 'main' | 'gallery' | 'video', files: PendingDishMediaFile[]) => void;
   progress: number;
 }) {
   const [error, setError] = useState('');
+  const [thumbnailError, setThumbnailError] = useState('');
+  const [thumbnailTime, setThumbnailTime] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [thumbnailReady, setThumbnailReady] = useState(false);
+  const [thumbnailSeeking, setThumbnailSeeking] = useState(false);
+  const [thumbnailSourceLoading, setThumbnailSourceLoading] = useState(false);
+  const [thumbnailSourceUrl, setThumbnailSourceUrl] = useState('');
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState('');
+  const [thumbnailPreviewBlob, setThumbnailPreviewBlob] = useState<Blob | null>(null);
+  const thumbnailVideoRef = useRef<HTMLVideoElement | null>(null);
+  const thumbnailRequestRef = useRef(0);
   const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   const videoTypes = ['video/mp4', 'video/webm'];
   const maxBytes = 18 * 1024 * 1024;
+  const canCaptureVideo = Boolean(thumbnailSourceUrl);
 
   const pickFiles = (files: FileList | null, target: 'main' | 'gallery' | 'video') => {
     if (!files?.length) return;
@@ -382,20 +449,30 @@ export function DishMediaUploader({
     });
     if (!accepted.length) return;
     setError('');
-    onFiles(accepted);
+    const pending = accepted.map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
+    onFiles(target, pending);
 
     if (target === 'main') {
-      onChange({ ...dish, mainImageUrl: URL.createObjectURL(accepted[0]), videoThumbnailUrl: dish.videoThumbnailUrl || URL.createObjectURL(accepted[0]) });
+      onChange({ ...dish, mainImageUrl: pending[0].previewUrl, videoThumbnailUrl: dish.videoThumbnailUrl || pending[0].previewUrl });
     }
     if (target === 'video') {
-      onChange({ ...dish, videoUrl: URL.createObjectURL(accepted[0]) });
+      setThumbnailError('');
+      setThumbnailTime(0);
+      setVideoDuration(0);
+      setThumbnailReady(false);
+      setThumbnailSeeking(false);
+      setThumbnailSourceUrl('');
+      setThumbnailSourceLoading(false);
+      setThumbnailPreviewUrl('');
+      setThumbnailPreviewBlob(null);
+      onChange({ ...dish, videoUrl: pending[0].previewUrl });
     }
     if (target === 'gallery') {
-      const galleryItems: DishMediaItem[] = accepted.map((file) => ({
+      const galleryItems: DishMediaItem[] = pending.map((item) => ({
         id: createId('gallery'),
-        name: file.name,
+        name: item.file.name,
         type: 'image',
-        url: URL.createObjectURL(file)
+        url: item.previewUrl
       }));
       onChange({ ...dish, gallery: [...dish.gallery, ...galleryItems] });
     }
@@ -407,6 +484,193 @@ export function DishMediaUploader({
     if (swapIndex < 0 || swapIndex >= next.length) return;
     [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
     onChange({ ...dish, gallery: next });
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    let localSourceUrl = '';
+    setThumbnailError('');
+    setThumbnailTime(0);
+    setVideoDuration(0);
+    setThumbnailReady(false);
+    setThumbnailSeeking(false);
+    setThumbnailSourceUrl('');
+    setThumbnailSourceLoading(false);
+    setThumbnailPreviewUrl('');
+    setThumbnailPreviewBlob(null);
+
+    if (!dish.videoUrl) return undefined;
+
+    if (dish.videoUrl.startsWith('blob:') || dish.videoUrl.startsWith('data:')) {
+      setThumbnailSourceUrl(dish.videoUrl);
+      return undefined;
+    }
+
+    setThumbnailSourceLoading(true);
+    fetch(dish.videoUrl)
+      .then((response) => {
+        if (!response.ok) throw new Error('No se pudo descargar el video guardado.');
+        return response.blob();
+      })
+      .then((blob) => {
+        if (cancelled) return;
+        localSourceUrl = URL.createObjectURL(blob);
+        setThumbnailSourceUrl(localSourceUrl);
+        setThumbnailError('');
+      })
+      .catch(() => getMediaDataUrl(dish.videoUrl, dish.restaurantId || restaurantConfig.restaurantId))
+      .then((mediaData) => {
+        if (cancelled) return;
+        if (!mediaData) return;
+        setThumbnailSourceUrl(mediaData.dataUrl);
+        setThumbnailError('');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setThumbnailSourceUrl('');
+        setThumbnailError('No se pudo preparar el video guardado para extraer fotogramas.');
+      })
+      .finally(() => {
+        if (!cancelled) setThumbnailSourceLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      if (localSourceUrl) URL.revokeObjectURL(localSourceUrl);
+    };
+  }, [dish.videoUrl]);
+
+  const seekVideoTo = (video: HTMLVideoElement, time: number) => {
+    return new Promise<void>((resolve, reject) => {
+      const targetTime = Math.max(0, Math.min(Number.isFinite(video.duration) ? video.duration : time, time));
+      const cleanup = () => {
+        video.removeEventListener('seeked', handleSeeked);
+        video.removeEventListener('error', handleError);
+      };
+      const handleSeeked = () => {
+        cleanup();
+        resolve();
+      };
+      const handleError = () => {
+        cleanup();
+        reject(new Error('No se pudo mover el video a ese momento.'));
+      };
+
+      if (Math.abs(video.currentTime - targetTime) < 0.04 && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        resolve();
+        return;
+      }
+
+      video.addEventListener('seeked', handleSeeked, { once: true });
+      video.addEventListener('error', handleError, { once: true });
+      video.currentTime = targetTime;
+    });
+  };
+
+  const makeThumbnailFileName = (time: number) => {
+    const slug = (dish.title || 'plato')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    return `${slug || 'plato'}-${Math.round(time * 1000)}.jpg`;
+  };
+
+  const setThumbnailPreview = (blob: Blob) => {
+    setThumbnailPreviewBlob(blob);
+    setThumbnailPreviewUrl(URL.createObjectURL(blob));
+  };
+
+  const selectThumbnailAsMainImage = (blob: Blob, time: number) => {
+    const file = new File([blob], makeThumbnailFileName(time), { type: 'image/jpeg' });
+    const previewUrl = URL.createObjectURL(file);
+    setThumbnailPreviewUrl(previewUrl);
+    setThumbnailPreviewBlob(blob);
+    onFiles('main', [{ file, previewUrl }]);
+    onChange({ ...dish, mainImageUrl: previewUrl, videoThumbnailUrl: previewUrl });
+    return previewUrl;
+  };
+
+  const drawSelectedFrame = async (time: number) => {
+    const video = thumbnailVideoRef.current;
+    if (!video || !thumbnailSourceUrl) throw new Error('No hay video disponible.');
+    if (!video.videoWidth || !video.videoHeight) throw new Error('Espera a que el video cargue antes de elegir la portada.');
+
+    await seekVideoTo(video, time);
+    await new Promise((resolve) => window.requestAnimationFrame(resolve));
+
+    const reelAspect = 9 / 16;
+    const sourceAspect = video.videoWidth / video.videoHeight;
+    const sourceWidth = sourceAspect > reelAspect ? video.videoHeight * reelAspect : video.videoWidth;
+    const sourceHeight = sourceAspect > reelAspect ? video.videoHeight : video.videoWidth / reelAspect;
+    const sourceX = (video.videoWidth - sourceWidth) / 2;
+    const sourceY = (video.videoHeight - sourceHeight) / 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('No se pudo preparar la miniatura.');
+
+    context.drawImage(video, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+
+    return new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('No se pudo generar la miniatura.'));
+        },
+        'image/jpeg',
+        0.88
+      );
+    });
+  };
+
+  const previewSelectedFrame = async (time: number) => {
+    if (!canCaptureVideo) {
+      setThumbnailError('No se pudo preparar el video para elegir una miniatura.');
+      return;
+    }
+    const requestId = thumbnailRequestRef.current + 1;
+    thumbnailRequestRef.current = requestId;
+    try {
+      setThumbnailSeeking(true);
+      const blob = await drawSelectedFrame(time);
+      if (thumbnailRequestRef.current !== requestId) return;
+      setThumbnailPreview(blob);
+      setThumbnailError('');
+    } catch (caughtError) {
+      if (thumbnailRequestRef.current !== requestId) return;
+      const message = caughtError instanceof Error ? caughtError.message : 'No se pudo generar la vista previa.';
+      setThumbnailError(message);
+    } finally {
+      if (thumbnailRequestRef.current === requestId) {
+        setThumbnailSeeking(false);
+      }
+    }
+  };
+
+  const updateThumbnailTime = async (value: number) => {
+    const nextTime = Math.max(0, Math.min(videoDuration || 0, value));
+    setThumbnailTime(nextTime);
+    setThumbnailError('');
+    await previewSelectedFrame(nextTime);
+  };
+
+  const captureThumbnail = async () => {
+    if (!canCaptureVideo) {
+      setThumbnailError('No se pudo preparar el video para elegir una miniatura.');
+      return;
+    }
+    try {
+      setThumbnailSeeking(true);
+      const blob = thumbnailPreviewBlob ?? (await drawSelectedFrame(thumbnailTime));
+      selectThumbnailAsMainImage(blob, thumbnailTime);
+      setThumbnailError('');
+    } catch (caughtError) {
+      const message = caughtError instanceof Error ? caughtError.message : 'No se pudo capturar este video.';
+      setThumbnailError(message);
+    } finally {
+      setThumbnailSeeking(false);
+    }
   };
 
   return (
@@ -423,9 +687,79 @@ export function DishMediaUploader({
         </div>
       ) : null}
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <MediaPreview label="Portada" url={dish.mainImageUrl} />
-        <MediaPreview label="Video" url={dish.videoUrl} video />
+        <MediaPreview label="Portada reel" reel url={dish.mainImageUrl} />
+        <MediaPreview label="Video reel" reel url={dish.videoUrl} video />
       </div>
+      {dish.videoUrl ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-base p-3">
+          <div className="grid gap-4 md:grid-cols-[minmax(180px,240px)_minmax(0,1fr)]">
+            <div className="mx-auto aspect-[9/16] w-full max-w-[240px] overflow-hidden rounded-2xl bg-black">
+              {thumbnailPreviewUrl ? <img alt="" className="size-full object-cover" src={thumbnailPreviewUrl} /> : null}
+              <video
+                className={thumbnailPreviewUrl ? 'pointer-events-none absolute size-px opacity-0' : 'size-full object-cover'}
+                muted
+                onError={() => {
+                  setThumbnailReady(false);
+                  setThumbnailError('No se pudo cargar el video para elegir la miniatura.');
+                }}
+                onLoadedData={() => {
+                  setThumbnailReady(true);
+                  if (canCaptureVideo) {
+                    void previewSelectedFrame(thumbnailTime);
+                  }
+                }}
+                onLoadedMetadata={(event) => {
+                  const duration = Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0;
+                  setVideoDuration(duration);
+                  setThumbnailTime(Math.min(thumbnailTime, duration));
+                  event.currentTarget.pause();
+                }}
+                playsInline
+                preload="auto"
+                ref={thumbnailVideoRef}
+                src={thumbnailSourceUrl}
+              />
+            </div>
+            <div className="grid content-center gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-black text-white/72">Miniatura del video</p>
+                <span className="text-xs font-bold text-white/48">{formatVideoTime(thumbnailTime)}</span>
+              </div>
+              <input
+                className="w-full accent-accent"
+                disabled={!videoDuration || !canCaptureVideo || thumbnailSourceLoading}
+                max={videoDuration || 0}
+                min={0}
+                onChange={(event) => void updateThumbnailTime(Number(event.target.value))}
+                step={0.1}
+                type="range"
+                value={thumbnailTime}
+              />
+              <button
+                className="inline-flex h-11 w-fit items-center gap-2 rounded-2xl bg-accent px-4 text-sm font-black text-white disabled:opacity-50"
+                disabled={!videoDuration || !thumbnailReady || thumbnailSeeking || !canCaptureVideo || thumbnailSourceLoading}
+                onClick={() => void captureThumbnail()}
+                type="button"
+              >
+                <Star className="size-4" />
+                {thumbnailSeeking ? 'Preparando fotograma' : 'Seleccionar como imagen principal'}
+              </button>
+              {thumbnailPreviewUrl && dish.mainImageUrl === thumbnailPreviewUrl ? (
+                <p className="text-xs font-bold text-emerald-200">Este fotograma esta seleccionado como imagen principal.</p>
+              ) : null}
+              {thumbnailSourceLoading ? (
+                <p className="text-xs font-bold text-white/56">Preparando el video para extraer fotogramas...</p>
+              ) : null}
+              {!canCaptureVideo && !thumbnailSourceLoading ? (
+                <p className="text-xs font-bold text-amber-100">
+                  No se pudo preparar este video para extraer fotogramas.
+                </p>
+              ) : null}
+              {thumbnailError ? <p className="text-xs font-bold text-red-300">{thumbnailError}</p> : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
       {dish.gallery.length ? (
         <div className="mt-4 grid gap-2">
           {dish.gallery.map((item, index) => (
@@ -462,6 +796,12 @@ export function DishMediaUploader({
   );
 }
 
+function formatVideoTime(value: number) {
+  const seconds = Math.max(0, Math.floor(value));
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
 function MediaInput({
   icon,
   label,
@@ -482,13 +822,13 @@ function MediaInput({
   );
 }
 
-function MediaPreview({ label, url, video }: { label: string; url: string; video?: boolean }) {
+function MediaPreview({ label, reel, url, video }: { label: string; reel?: boolean; url: string; video?: boolean }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-base">
-      <div className="aspect-video bg-black/30">
+    <div className="mx-auto w-full max-w-[260px] overflow-hidden rounded-2xl border border-white/10 bg-base">
+      <div className={`${reel ? 'aspect-[9/16]' : 'aspect-video'} bg-black/30`}>
         {url ? (
           video ? (
-            <video className="size-full object-cover" controls src={url} />
+            <video className="size-full object-cover" controls playsInline src={url} />
           ) : (
             <img alt="" className="size-full object-cover" src={url} />
           )

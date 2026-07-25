@@ -44,6 +44,35 @@ function getMediaUrl(payload) {
   return { fileId: record.driveFileId, url: record.fileUrl };
 }
 
+function getMediaDataUrl(payload) {
+  requireFields(payload, ['restaurantId', 'fileUrl']);
+  var record = allRows('DISH_MEDIA').find(function(item) {
+    return item.restaurantId === payload.restaurantId && item.fileUrl === payload.fileUrl && item.type === 'video';
+  });
+  if (!record) throw appError('NOT_FOUND', 'No se encontro el video guardado.');
+
+  var response = UrlFetchApp.fetch(record.fileUrl, {
+    followRedirects: true,
+    muteHttpExceptions: true
+  });
+  var code = response.getResponseCode();
+  if (code < 200 || code >= 300) {
+    throw appError('MEDIA_FETCH_FAILED', 'No se pudo leer el video guardado.');
+  }
+
+  var bytes = response.getBlob().getBytes();
+  if (bytes.length > APP_CONFIG.MAX_VIDEO_BYTES) {
+    throw appError('FILE_TOO_LARGE', 'El video es demasiado grande para preparar fotogramas desde edicion.');
+  }
+
+  var mimeType = record.mimeType || response.getHeaders()['Content-Type'] || 'video/mp4';
+  return {
+    dataUrl: 'data:' + mimeType + ';base64,' + Utilities.base64Encode(bytes),
+    fileName: record.fileName,
+    mimeType: mimeType
+  };
+}
+
 function mediaToFrontend(record) {
   return {
     id: record.id,

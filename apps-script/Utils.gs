@@ -100,5 +100,5 @@ function frontendRole(role) {
 }
 
 function publicUrlForFile(fileId) {
-  return 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(fileId);
+  return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=w1600';
 }

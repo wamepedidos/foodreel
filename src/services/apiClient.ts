@@ -4,8 +4,10 @@ const DEFAULT_TIMEOUT_MS = 15000;
 const SAFE_ACTIONS = new Set([
   'getRestaurant',
   'getMenu',
+  'getDishBadgeMetadata',
   'getCategories',
   'getDish',
+  'getMediaDataUrl',
   'getOrder',
   'getRestaurantOrders',
   'getApprovedPosts',

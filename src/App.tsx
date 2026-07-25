@@ -2,24 +2,34 @@ import { AppLayout } from './components/AppLayout';
 import { MenuExperience } from './components/MenuExperience';
 import { restaurantConfig } from './config/restaurant';
 import { ToastProvider } from './components/Toast';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Dish } from './types';
-import { dishCommentsCountChangedEvent, getMenu } from './services/dishesService';
+import { MENU_PAGE_SIZE, dishCommentsCountChangedEvent, getMenu } from './services/dishesService';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 
-let cachedMenuDishes: Dish[] | null = null;
+let cachedMenuState: { dishes: Dish[]; hasMore: boolean; nextOffset: number } | null = null;
 
 export default function App() {
-  const [dishes, setDishes] = useState<Dish[]>(() => cachedMenuDishes ?? []);
+  const [dishes, setDishes] = useState<Dish[]>(() => cachedMenuState?.dishes ?? []);
+  const [hasMore, setHasMore] = useState(() => cachedMenuState?.hasMore ?? false);
+  const [nextOffset, setNextOffset] = useState(() => cachedMenuState?.nextOffset ?? 0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let mounted = true;
-    void getMenu()
+    void getMenu({ limit: MENU_PAGE_SIZE, offset: 0 })
       .then((menu) => {
         if (mounted) {
-          cachedMenuDishes = menu.dishes;
+          const nextState = {
+            dishes: menu.dishes,
+            hasMore: Boolean(menu.pagination?.hasMore),
+            nextOffset: menu.pagination?.nextOffset ?? menu.dishes.length
+          };
+          cachedMenuState = nextState;
           setDishes(menu.dishes);
+          setHasMore(nextState.hasMore);
+          setNextOffset(nextState.nextOffset);
           setError('');
         }
       })
@@ -33,6 +43,33 @@ export default function App() {
     };
   }, []);
 
+  const loadMoreDishes = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const menu = await getMenu({ limit: MENU_PAGE_SIZE, offset: nextOffset });
+      const seenIds = new Set(dishes.map((dish) => dish.id));
+      const newDishes = menu.dishes.filter((dish) => !seenIds.has(dish.id));
+      const mergedDishes = [...dishes, ...newDishes];
+      const nextState = {
+        dishes: mergedDishes,
+        hasMore: Boolean(menu.pagination?.hasMore),
+        nextOffset: menu.pagination?.nextOffset ?? mergedDishes.length
+      };
+
+      cachedMenuState = nextState;
+      setDishes(mergedDishes);
+      setHasMore(nextState.hasMore);
+      setNextOffset(nextState.nextOffset);
+      setError('');
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : 'No pudimos cargar mas platos.');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [dishes, hasMore, loadingMore, nextOffset]);
+
   useEffect(() => {
     const syncDishCommentsCount = (event: Event) => {
       const detail = (event as CustomEvent<{ dishId?: string; delta?: number }>).detail;
@@ -42,7 +79,7 @@ export default function App() {
         const next = current.map((dish) =>
           dish.id === detail.dishId ? { ...dish, commentsCount: Math.max(0, dish.commentsCount + delta) } : dish
         );
-        cachedMenuDishes = next;
+        cachedMenuState = cachedMenuState ? { ...cachedMenuState, dishes: next } : null;
         return next;
       });
     };
@@ -69,7 +106,7 @@ export default function App() {
             </div>
           </div>
         ) : dishes.length ? (
-          <MenuExperience dishes={dishes} />
+          <MenuExperience dishes={dishes} hasMore={hasMore} loadingMore={loadingMore} onLoadMore={loadMoreDishes} />
         ) : (
           <div className="h-full overflow-hidden pb-[84px]">
             <LoadingSkeleton />

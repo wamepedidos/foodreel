@@ -1,5 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Dish } from '../types';
 import { CategoryTabs } from './CategoryTabs';
 import { EmptyMenuState } from './EmptyMenuState';
@@ -10,11 +10,22 @@ import { GridDishSkeleton } from './GridDishSkeleton';
 import { MenuSearch } from './MenuSearch';
 import { useMenuStore } from '../store/useMenuStore';
 
-export function GridMenu({ dishes }: { dishes: Dish[] }) {
+export function GridMenu({
+  dishes,
+  hasMore,
+  loadingMore,
+  onLoadMore
+}: {
+  dishes: Dish[];
+  hasMore: boolean;
+  loadingMore: boolean;
+  onLoadMore: () => void;
+}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<MenuFilter>('all');
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const query = useMenuStore((state) => state.searchQuery);
   const setQuery = useMenuStore((state) => state.setSearchQuery);
   const selectedCategory = useMenuStore((state) => state.selectedCategory);
@@ -78,6 +89,33 @@ export function GridMenu({ dishes }: { dishes: Dish[] }) {
     window.setTimeout(() => setLoading(false), 420);
   };
 
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || loading || !hasMore || loadingMore) {
+      return undefined;
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      onLoadMore();
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          onLoadMore();
+        }
+      },
+      {
+        rootMargin: '640px 0px',
+        threshold: 0.01
+      }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, onLoadMore]);
+
   if (error) {
     return (
       <div className="h-full overflow-y-auto px-4 pb-[96px] pt-[calc(78px+env(safe-area-inset-top))]">
@@ -118,11 +156,22 @@ export function GridMenu({ dishes }: { dishes: Dish[] }) {
             ))}
           </div>
         ) : filteredDishes.length ? (
-          <div className="grid grid-cols-2 gap-3 pt-3 sm:grid-cols-3 lg:grid-cols-4">
-            {filteredDishes.map((dish) => (
-              <GridDishCard dish={dish} key={dish.id} onFocus={setActiveDishId} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3 pt-3 sm:grid-cols-3 lg:grid-cols-4">
+              {filteredDishes.map((dish) => (
+                <GridDishCard dish={dish} key={dish.id} onFocus={setActiveDishId} />
+              ))}
+            </div>
+            <div className="h-16" ref={loadMoreRef}>
+              {loadingMore ? (
+                <div className="grid grid-cols-2 gap-3 pt-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <GridDishSkeleton key={index} />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </>
         ) : (
           <EmptyMenuState onClear={clearFilters} />
         )}
