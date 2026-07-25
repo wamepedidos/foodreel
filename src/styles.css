@@ -98,7 +98,7 @@ body,
 
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 0;
   color: var(--color-text-primary);
   background:
     radial-gradient(circle at 18% 0%, var(--color-page-glow), transparent 32rem),

@@ -19,8 +19,8 @@ export function GridDishCard({ dish, onFocus }: { dish: Dish; onFocus: (dishId: 
   };
 
   return (
-    <article className="overflow-hidden rounded-[22px] border border-white/10 bg-card shadow-2xl shadow-black/25">
-      <div className="relative aspect-[4/3] overflow-hidden bg-black">
+    <article className="flex h-full min-h-[398px] flex-col overflow-hidden rounded-[22px] border border-white/10 bg-card shadow-2xl shadow-black/25 sm:min-h-[420px]">
+      <div className="relative aspect-[4/3] shrink-0 overflow-hidden bg-black">
         <button aria-label={`Ver descripcion de ${dish.name}`} className="h-full w-full" onClick={openDescription} type="button">
           {poster ? (
             <img alt={dish.name} className="h-full w-full object-cover" src={poster} />
@@ -50,16 +50,16 @@ export function GridDishCard({ dish, onFocus }: { dish: Dish; onFocus: (dishId: 
         ) : null}
       </div>
 
-      <div className="grid gap-2.5 p-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-2.5 p-3">
         <div className="min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="line-clamp-2 text-sm font-black leading-5 text-white">{dish.name}</h3>
+            <h3 className="line-clamp-2 min-h-10 text-sm font-black leading-5 text-white">{dish.name}</h3>
             <p className="shrink-0 text-sm font-black text-accent">{formatCurrency(dish.price)}</p>
           </div>
-          <p className="mt-1 line-clamp-2 text-xs font-medium leading-5 text-white/72">{dish.shortDescription}</p>
+          <p className="mt-1 line-clamp-2 min-h-10 text-xs font-medium leading-5 text-white/72">{dish.shortDescription}</p>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex min-h-7 items-center justify-between gap-2">
           <span className="min-w-0 truncate rounded-full bg-black/20 px-2.5 py-1 text-[11px] font-bold text-muted">{dish.category}</span>
           <span
             className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
@@ -72,7 +72,7 @@ export function GridDishCard({ dish, onFocus }: { dish: Dish; onFocus: (dishId: 
 
         <SocialMetricsRow dish={dish} viewCount={dish.viewsCount} onComments={() => setCommentsOpen(true)} />
 
-        <div className="grid gap-2">
+        <div className="mt-auto grid gap-2">
           <button
             className="flex h-11 items-center justify-center gap-1 rounded-2xl border border-white/12 bg-black/20 px-3 text-xs font-bold text-white transition hover:border-accent/50"
             onClick={openDescription}

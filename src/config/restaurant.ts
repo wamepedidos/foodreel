@@ -3,7 +3,7 @@ import type { RestaurantConfig } from '../types';
 export const restaurantConfig: RestaurantConfig = {
   restaurantId: 'la-esquina-burger',
   brandName: 'FoodReel',
-  restaurantName: 'La Esquina Burger',
+  restaurantName: 'El menu de FoodReel',
   logoSrc: '/brand/foodreel-logo.png',
   logoText: 'F',
   tableId: 'mesa-7',

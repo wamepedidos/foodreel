@@ -2,7 +2,7 @@ var APP_CONFIG = {
   APP_NAME: 'RestaurantApp',
   DEFAULT_SPREADSHEET_ID: '1Ker24aWxc1iGu39UU7Cx7yGEb4IwZlddQBbp7ZIEIM4',
   DEFAULT_RESTAURANT_ID: 'la-esquina-burger',
-  DEFAULT_RESTAURANT_NAME: 'La Esquina Burger',
+  DEFAULT_RESTAURANT_NAME: 'El menu de FoodReel',
   DEFAULT_RESTAURANT_SLUG: 'la-esquina-burger',
   DEFAULT_TIMEZONE: 'America/Bogota',
   MAX_IMAGE_BYTES: 10 * 1024 * 1024,
@@ -38,7 +38,7 @@ var SHEET_HEADERS = {
 var BASE_CONFIG_ROWS = [
   ['restaurantName', APP_CONFIG.DEFAULT_RESTAURANT_NAME, 'Nombre visible del restaurante'],
   ['restaurantSlug', APP_CONFIG.DEFAULT_RESTAURANT_SLUG, 'Slug publico'],
-  ['restaurantLogo', '', 'URL del logo principal'],
+  ['restaurantLogo', '/brand/foodreel-logo.png', 'URL del logo principal'],
   ['primaryColor', '#FF6500', 'Color principal de la PWA'],
   ['currency', 'COP', 'Moneda para precios'],
   ['country', 'CO', 'Pais de operacion'],

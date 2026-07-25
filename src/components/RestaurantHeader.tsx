@@ -1,4 +1,5 @@
 import { Grid2X2, RectangleVertical, Send, Utensils } from 'lucide-react';
+import { useState } from 'react';
 import type { RestaurantConfig } from '../types';
 import { useMenuStore } from '../store/useMenuStore';
 import { ThemeToggle } from '../theme/ThemeToggle';
@@ -9,9 +10,11 @@ import { useToast } from './Toast';
 export function RestaurantHeader({ restaurant }: { restaurant: RestaurantConfig }) {
   const viewMode = useMenuStore((state) => state.viewMode);
   const setViewMode = useMenuStore((state) => state.setViewMode);
+  const [logoBroken, setLogoBroken] = useState(false);
   const { showToast } = useToast();
   const nextMode = viewMode === 'reel' ? 'grid' : 'reel';
   const toggleLabel = viewMode === 'reel' ? 'Abrir vista mosaico' : 'Volver a vista Reel';
+  const showLogoImage = Boolean(restaurant.logoSrc && !logoBroken);
   const shareMenu = async () => {
     const shareData = {
       title: restaurant.restaurantName,
@@ -34,32 +37,40 @@ export function RestaurantHeader({ restaurant }: { restaurant: RestaurantConfig 
   };
 
   return (
-    <header className="relative z-40 flex items-center justify-between border-b border-white/10 bg-base/95 px-4 pb-3 pt-[calc(14px+env(safe-area-inset-top))] backdrop-blur">
-      <div className="flex min-w-0 items-center gap-3">
+    <header className="relative z-40 flex min-h-[68px] items-center justify-between gap-2 border-b border-white/10 bg-base/95 px-3 pb-3 pt-[calc(14px+env(safe-area-inset-top))] backdrop-blur sm:px-4">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
         <div
-          className={`grid size-11 shrink-0 place-items-center rounded-2xl shadow-glow ${
-            restaurant.logoSrc ? 'bg-paper p-1' : 'bg-accent text-lg font-black text-contrast'
+          className={`grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl shadow-glow ${
+            showLogoImage ? 'bg-paper p-1.5' : 'bg-accent text-lg font-black text-contrast'
           }`}
         >
-          {restaurant.logoSrc ? (
-            <img alt={`${restaurant.brandName} logo`} className="size-full object-contain" src={restaurant.logoSrc} />
+          {showLogoImage ? (
+            <img
+              alt=""
+              aria-hidden="true"
+              className="block max-h-full max-w-full object-contain"
+              onError={() => setLogoBroken(true)}
+              src={restaurant.logoSrc}
+            />
           ) : (
             restaurant.logoText || <Utensils className="size-6" />
           )}
         </div>
         <div className="min-w-0">
-          <p className="truncate text-lg font-extrabold leading-tight">{restaurant.brandName}</p>
-          <p className="truncate text-xs text-muted">
+          <p className="truncate text-base font-extrabold leading-tight sm:text-lg">{restaurant.brandName}</p>
+          <p className="truncate text-[11px] leading-4 text-muted sm:text-xs">
             {restaurant.restaurantName} · Mesa {restaurant.tableNumber}
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
         <WaiterCallButton />
-        <ThemeToggle />
+        <div className="max-[300px]:hidden">
+          <ThemeToggle />
+        </div>
         <button
           aria-label="Compartir carta"
-          className="grid size-10 place-items-center rounded-2xl border border-white/10 bg-surface text-accent transition hover:border-accent/50"
+          className="grid size-10 place-items-center rounded-2xl border border-white/10 bg-surface text-accent transition hover:border-accent/50 max-[300px]:hidden"
           onClick={shareMenu}
           title="Compartir carta"
           type="button"

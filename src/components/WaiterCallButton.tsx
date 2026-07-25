@@ -13,13 +13,13 @@ export function WaiterCallButton({ variant = 'solid' }: { variant?: 'solid' | 'r
         className={
           reel
             ? 'inline-flex h-6 shrink-0 items-center gap-1 rounded-full border border-accent/80 bg-transparent px-2.5 text-xs font-normal text-paper transition hover:bg-accent/15'
-            : 'inline-flex h-10 items-center gap-2 rounded-2xl bg-accent px-3 text-xs font-bold text-white shadow-glow transition hover:brightness-110'
+            : 'inline-flex h-10 items-center gap-2 rounded-2xl bg-accent px-3 text-xs font-bold text-white shadow-glow transition hover:brightness-110 max-[380px]:w-10 max-[380px]:justify-center max-[380px]:px-0'
         }
         onClick={() => setOpen(true)}
         type="button"
       >
         <BellRing className={reel ? 'size-3.5' : 'size-4'} />
-        <span>{reel ? 'Mesero' : 'Llamar mesero'}</span>
+        <span className={reel ? undefined : 'max-[380px]:sr-only'}>{reel ? 'Mesero' : 'Llamar mesero'}</span>
       </button>
       <WaiterCallSheet open={open} onClose={() => setOpen(false)} />
     </>

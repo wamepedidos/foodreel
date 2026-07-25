@@ -150,21 +150,21 @@ export function GridMenu({
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-3 pt-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid auto-rows-fr grid-cols-1 gap-3 pt-3 min-[360px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (
               <GridDishSkeleton key={index} />
             ))}
           </div>
         ) : filteredDishes.length ? (
           <>
-            <div className="grid grid-cols-2 gap-3 pt-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid auto-rows-fr grid-cols-1 gap-3 pt-3 min-[360px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
               {filteredDishes.map((dish) => (
                 <GridDishCard dish={dish} key={dish.id} onFocus={setActiveDishId} />
               ))}
             </div>
             <div className="h-16" ref={loadMoreRef}>
               {loadingMore ? (
-                <div className="grid grid-cols-2 gap-3 pt-3 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="grid auto-rows-fr grid-cols-1 gap-3 pt-3 min-[360px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                   {Array.from({ length: 4 }).map((_, index) => (
                     <GridDishSkeleton key={index} />
                   ))}
