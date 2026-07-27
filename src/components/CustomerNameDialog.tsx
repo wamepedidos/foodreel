@@ -47,29 +47,29 @@ export function CustomerNameDialog({
 
   return (
     <div aria-modal="true" className="fixed inset-0 z-[95] grid place-items-center bg-black/80 p-4 backdrop-blur" role="dialog">
-      <div className="w-full max-w-[420px] rounded-[24px] border border-white/10 bg-card p-5 shadow-2xl">
+      <div className="w-full max-w-[420px] rounded-[24px] border border-[#eee9e5] bg-white p-5 text-[#252832] shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-accent/15 text-accent">
               <UserRound className="size-5" />
             </span>
             <div>
-              <h2 className="text-lg font-black text-white">{title}</h2>
-              <p className="mt-1 text-sm leading-5 text-muted">{description}</p>
+              <h2 className="text-lg font-black text-[#252832]">{title}</h2>
+              <p className="mt-1 text-sm font-medium leading-5 text-[#6f7480]">{description}</p>
             </div>
           </div>
           {onClose ? (
-            <button aria-label="Cerrar" className="grid size-9 shrink-0 place-items-center rounded-2xl bg-white/5 text-muted" onClick={onClose} type="button">
+            <button aria-label="Cerrar" className="grid size-9 shrink-0 place-items-center rounded-2xl bg-white text-[#252832] transition hover:bg-[#f3f3f2] hover:text-accent" onClick={onClose} type="button">
               <X className="size-4" />
             </button>
           ) : null}
         </div>
 
         <label className="mt-5 block">
-          <span className="text-xs font-bold text-muted">Nombre</span>
+          <span className="text-xs font-black text-[#6f7480]">Nombre</span>
           <input
             autoFocus
-            className="mt-2 h-12 w-full rounded-2xl border border-white/10 bg-base px-4 text-sm text-white outline-none transition placeholder:text-muted focus:border-accent/60"
+            className="mt-2 h-12 w-full rounded-2xl border border-[#ded9d4] bg-[#f7f7f6] px-4 text-sm font-bold text-[#252832] caret-accent outline-none transition placeholder:text-[#9aa0aa] focus:border-accent/60 focus:bg-white focus:ring-2 focus:ring-accent/10"
             onChange={(event) => setProfile((current) => ({ ...current, displayName: event.target.value }))}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
@@ -80,7 +80,7 @@ export function CustomerNameDialog({
             value={profile.displayName}
           />
         </label>
-        {error ? <p className="mt-2 text-sm text-red-100">{error}</p> : null}
+        {error ? <p className="mt-2 text-sm font-bold text-[#b42318]">{error}</p> : null}
 
         <button className="mt-5 h-12 w-full rounded-2xl bg-accent text-sm font-black text-white shadow-glow" onClick={confirm} type="button">
           Confirmar

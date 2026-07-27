@@ -1,4 +1,5 @@
 import {
+  BadgeCheck,
   Bookmark,
   ChefHat,
   CirclePlus,
@@ -29,6 +30,7 @@ type MomentPost = {
   title: string;
   subtitle: string;
   image: string;
+  fallbackImage: string;
   carousel: string;
   caption: string;
   badges: MomentBadge[];
@@ -48,6 +50,7 @@ const posts: MomentPost[] = [
     title: 'Submarino Gigante',
     subtitle: 'Especialidad de la casa',
     image: '/mockups/momentos-submarino.jpg',
+    fallbackImage: '/mockups/momentos-tacos-1.jpg',
     carousel: '1/3',
     caption: 'Simplemente espectacular! El mejor submarino que he probado. La carne es jugosa y el pan queda perfecto.',
     badges: [
@@ -65,6 +68,7 @@ const posts: MomentPost[] = [
     title: 'Volcan de Chocolate',
     subtitle: 'Postre que no te puedes perder',
     image: '/mockups/momentos-volcan.jpg',
+    fallbackImage: '/mockups/momentos-tacos-2.jpg',
     carousel: '1/2',
     caption: 'Centro caliente, helado cremoso y una textura brutal. Es el cierre perfecto para compartir.',
     badges: [
@@ -74,6 +78,80 @@ const posts: MomentPost[] = [
     likes: '98',
     comments: '12',
     views: '890'
+  },
+  {
+    author: 'MesaFoodie',
+    avatar: '/mockups/momentos-avatar.jpg',
+    verified: true,
+    time: 'Hace 7 horas',
+    title: 'Tacos al Pastor',
+    subtitle: 'Favorito para compartir',
+    image: '/mockups/momentos-unique-tacos.png',
+    fallbackImage: '/mockups/momentos-tacos-1.jpg',
+    carousel: '1/4',
+    caption: 'Tortilla suave, carne bien dorada y ese toque de limon que levanta todo el plato.',
+    badges: [
+      { icon: Flame, label: 'Picante suave', tone: 'accent' },
+      { icon: UsersRound, label: 'Para 3 personas', tone: 'amber' }
+    ],
+    likes: '211',
+    comments: '34',
+    views: '2.4K'
+  },
+  {
+    author: 'AnaComeBien',
+    avatar: '/mockups/momentos-avatar-sofi.jpg',
+    time: 'Ayer',
+    title: 'Burger Queso Bacon',
+    subtitle: 'Doble carne y mucho queso',
+    image: '/mockups/momentos-unique-burger.png',
+    fallbackImage: '/mockups/momentos-tacos-2.jpg',
+    carousel: '2/3',
+    caption: 'Carne gruesa, queso fundido y bacon crujiente. Esta es de las que toca pedir con papas.',
+    badges: [
+      { icon: ChefHat, label: 'Recomendado', tone: 'accent' },
+      { icon: UsersRound, label: 'Para 2 personas', tone: 'amber' }
+    ],
+    likes: '143',
+    comments: '18',
+    views: '1.1K'
+  },
+  {
+    author: 'RutaBurger',
+    avatar: '/mockups/momentos-avatar-carlos.jpg',
+    verified: true,
+    time: 'Ayer',
+    title: 'Queso Fundido',
+    subtitle: 'Para abrir el apetito',
+    image: '/mockups/momentos-unique-cheese.png',
+    fallbackImage: '/mockups/momentos-submarino.jpg',
+    carousel: '3/5',
+    caption: 'El queso viene caliente y elastico, perfecto para compartir antes del plato fuerte.',
+    badges: [
+      { icon: Flame, label: 'Picante alto', tone: 'accent' },
+      { icon: UsersRound, label: 'Para 4 personas', tone: 'amber' }
+    ],
+    likes: '302',
+    comments: '41',
+    views: '3.8K'
+  },
+  {
+    author: 'DulceFinal',
+    avatar: '/mockups/momentos-avatar.jpg',
+    time: 'Hace 2 dias',
+    title: 'Crema de la Casa',
+    subtitle: 'Suave, fria y cremosa',
+    image: '/mockups/momentos-unique-cream.png',
+    fallbackImage: '/mockups/momentos-volcan.jpg',
+    carousel: '1/2',
+    caption: 'Una cucharada fresca despues de la burger cae perfecto. Textura suave y sabor balanceado.',
+    badges: [
+      { icon: ChefHat, label: 'Postre top', tone: 'accent' },
+      { icon: UsersRound, label: 'Para 2 personas', tone: 'amber' }
+    ],
+    likes: '187',
+    comments: '29',
+    views: '1.7K'
   }
 ];
 
@@ -86,7 +164,7 @@ function MomentosHeader() {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="text-[1.35rem] font-extrabold leading-tight tracking-normal text-white">Momentos</h1>
-          <p className="mt-1 text-[0.68rem] font-medium leading-5 text-white/58">
+          <p className="mt-1 text-[0.68rem] font-medium leading-5 text-muted">
             Descubre y comparte los mejores platos
           </p>
         </div>
@@ -107,7 +185,7 @@ function MomentosHeader() {
             className={`h-8 shrink-0 rounded-full border px-4 text-xs font-normal transition ${
               selectedFilter === filter
                 ? 'border-accent bg-accent text-white shadow-[0_10px_26px_rgba(252,45,4,0.24)]'
-                : 'border-white/10 bg-black/20 text-white/70 hover:border-accent/50 hover:text-white'
+                : 'border-white/10 bg-surface text-muted hover:border-accent/50 hover:text-white'
             }`}
             key={filter}
             onClick={() => setSelectedFilter(filter)}
@@ -124,8 +202,8 @@ function MomentosHeader() {
 function MomentBadgePill({ badge }: { badge: MomentBadge }) {
   const Icon = badge.icon;
   const styles = {
-    accent: 'border-accent/65 bg-black/[0.24] text-accent',
-    amber: 'border-yellow-300/55 bg-black/[0.24] text-yellow-200'
+    accent: 'border-accent/35 bg-accent/10 text-accent',
+    amber: 'border-yellow-300/45 bg-yellow-500/10 text-warning'
   } satisfies Record<MomentBadge['tone'], string>;
 
   return (
@@ -149,11 +227,11 @@ function ActionButton({
 }) {
   return (
     <button
-      className="inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-full px-1.5 text-xs text-white/70 transition hover:text-white"
+      className="inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-full px-1.5 text-xs text-muted transition hover:text-white"
       onClick={onClick}
       type="button"
     >
-      <Icon className={`size-3.5 shrink-0 ${active ? 'text-accent' : 'text-white/70'}`} fill={active ? 'currentColor' : 'none'} />
+      <Icon className={`size-3.5 shrink-0 ${active ? 'text-accent' : 'text-muted'}`} fill={active ? 'currentColor' : 'none'} />
       {label ? <span className="truncate leading-none">{label}</span> : null}
     </button>
   );
@@ -161,26 +239,42 @@ function ActionButton({
 
 function MomentPostCard({ post }: { post: MomentPost }) {
   const navigate = useNavigate();
+  const [imageSrc, setImageSrc] = useState(post.image);
+  const [avatarSrc, setAvatarSrc] = useState(post.avatar);
 
   return (
     <article className="overflow-hidden rounded-[22px] border border-white/10 bg-card shadow-2xl shadow-black/25">
       <div className="flex items-center gap-2.5 px-3 pb-2 pt-3">
-        <img alt="" className="size-9 shrink-0 rounded-full object-cover" src={post.avatar} />
+        <img
+          alt=""
+          className="size-9 shrink-0 rounded-full object-cover"
+          onError={() => setAvatarSrc('/mockups/momentos-avatar.jpg')}
+          src={avatarSrc}
+        />
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
             <p className="truncate text-sm font-black leading-4 text-white">{post.author}</p>
-            {post.verified ? <span className="grid size-3.5 shrink-0 place-items-center rounded-full bg-accent text-[8px] font-black text-white">✓</span> : null}
+            {post.verified ? (
+              <span className="grid size-3.5 shrink-0 place-items-center rounded-full bg-accent text-white">
+                <BadgeCheck className="size-3" />
+              </span>
+            ) : null}
           </div>
           <p className="truncate text-[0.68rem] font-medium leading-4 text-muted">{post.time}</p>
         </div>
-        <button aria-label="Mas opciones" className="grid size-8 place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white" type="button">
+        <button aria-label="Mas opciones" className="grid size-8 place-items-center rounded-full text-muted transition hover:bg-surface hover:text-white" type="button">
           <MoreHorizontal className="size-4" />
         </button>
       </div>
 
       <div className="px-2">
         <div className="relative overflow-hidden rounded-[14px] bg-black">
-          <img alt="" className="aspect-[16/8.2] w-full object-cover" src={post.image} />
+          <img
+            alt={post.title}
+            className="aspect-[16/8.2] w-full object-cover"
+            onError={() => setImageSrc(post.fallbackImage)}
+            src={imageSrc}
+          />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/26 to-transparent p-3">
             <h2 className="max-w-[17rem] truncate text-[1.05rem] font-extrabold leading-tight tracking-normal text-white">
               {post.title}
