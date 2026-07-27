@@ -2,8 +2,7 @@ import { Grid2X2 } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Dish } from '../types';
 import { useMenuStore } from '../store/useMenuStore';
-import { hasReelMenuLoadedOnce, hasVideoPreloaded, markReelMenuLoaded, markVideoPreloaded } from '../utils/reelVideoCache';
-import { LoadingSkeleton } from './LoadingSkeleton';
+import { hasVideoPreloaded, markVideoPreloaded } from '../utils/reelVideoCache';
 import { ReelDishCard } from './ReelDishCard';
 import { WaiterCallButton } from './WaiterCallButton';
 
@@ -18,7 +17,6 @@ export function ReelMenu({
   loadingMore: boolean;
   onLoadMore: () => void;
 }) {
-  const [loading, setLoading] = useState(() => !hasReelMenuLoadedOnce());
   const storedActiveDishId = useMenuStore((state) => state.activeDishId);
   const setStoredActiveDishId = useMenuStore((state) => state.setActiveDishId);
   const selectedCategory = useMenuStore((state) => state.selectedCategory);
@@ -35,21 +33,8 @@ export function ReelMenu({
   );
   const nextDish = dishes[activeIndex + 1];
 
-  useEffect(() => {
-    if (!loading) {
-      markReelMenuLoaded();
-      return undefined;
-    }
-
-    const timer = window.setTimeout(() => setLoading(false), 650);
-    return () => {
-      window.clearTimeout(timer);
-      markReelMenuLoaded();
-    };
-  }, [loading]);
-
   useLayoutEffect(() => {
-    if (loading || restoredScrollRef.current || !containerRef.current) {
+    if (restoredScrollRef.current || !containerRef.current) {
       return;
     }
 
@@ -63,7 +48,7 @@ export function ReelMenu({
     }
 
     restoredScrollRef.current = true;
-  }, [activeDishId, loading, storedActiveDishId]);
+  }, [activeDishId, storedActiveDishId]);
 
   useEffect(() => {
     if (selectedCategory === 'Todos' || categories.includes(selectedCategory)) {
@@ -100,7 +85,7 @@ export function ReelMenu({
   };
 
   useEffect(() => {
-    if (loading || !containerRef.current) {
+    if (!containerRef.current) {
       return undefined;
     }
 
@@ -132,23 +117,15 @@ export function ReelMenu({
     cards.forEach((card) => observer.observe(card));
 
     return () => observer.disconnect();
-  }, [dishes, loading, setSelectedCategory, setStoredActiveDishId]);
+  }, [dishes, setSelectedCategory, setStoredActiveDishId]);
 
   useEffect(() => {
-    if (loading || !hasMore || loadingMore || activeIndex < dishes.length - 3) {
+    if (!hasMore || loadingMore || activeIndex < dishes.length - 3) {
       return;
     }
 
     onLoadMore();
-  }, [activeIndex, dishes.length, hasMore, loading, loadingMore, onLoadMore]);
-
-  if (loading) {
-    return (
-      <div className="h-full overflow-hidden">
-        <LoadingSkeleton />
-      </div>
-    );
-  }
+  }, [activeIndex, dishes.length, hasMore, loadingMore, onLoadMore]);
 
   return (
     <>

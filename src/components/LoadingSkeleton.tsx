@@ -1,16 +1,24 @@
+import { useState } from 'react';
 import { restaurantConfig } from '../config/restaurant';
+import { publicAssetUrl } from '../utils/publicAsset';
 
 export function LoadingSkeleton() {
-  const logoSrc = restaurantConfig.logoSrc || '/brand/foodreel-logo.png';
+  const [logoBroken, setLogoBroken] = useState(false);
+  const logoSrc = publicAssetUrl(restaurantConfig.logoSrc || '/brand/foodreel-logo.png');
+  const showLogo = Boolean(logoSrc && !logoBroken);
 
   return (
     <div className="grid h-full snap-start place-items-center bg-base px-6 text-center">
       <div className="grid justify-items-center gap-5">
-        <div className="grid size-24 place-items-center rounded-[24px] border border-white/12 bg-paper p-3 shadow-[0_22px_70px_rgba(0,0,0,0.34)]">
-          {logoSrc ? (
-            <img alt="FoodReel logo" className="size-full object-contain" src={logoSrc} />
+        <div
+          className={`grid size-24 place-items-center rounded-[24px] border border-white/12 shadow-[0_22px_70px_rgba(0,0,0,0.34)] ${
+            showLogo ? 'bg-paper p-3' : 'bg-accent text-4xl font-black text-contrast'
+          }`}
+        >
+          {showLogo ? (
+            <img alt="" aria-hidden="true" className="size-full object-contain" onError={() => setLogoBroken(true)} src={logoSrc} />
           ) : (
-            <span className="text-4xl font-black text-accent">{restaurantConfig.logoText}</span>
+            <span>{restaurantConfig.logoText}</span>
           )}
         </div>
 

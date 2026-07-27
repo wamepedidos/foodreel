@@ -12,6 +12,7 @@ import {
   Utensils
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 type MomentBadge = {
@@ -78,6 +79,7 @@ const posts: MomentPost[] = [
 
 function MomentosHeader() {
   const navigate = useNavigate();
+  const [selectedFilter, setSelectedFilter] = useState(filters[0]);
 
   return (
     <header className="px-4 pt-[calc(18px+env(safe-area-inset-top))]">
@@ -99,15 +101,16 @@ function MomentosHeader() {
       </div>
 
       <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
-        {filters.map((filter, index) => (
+        {filters.map((filter) => (
           <button
-            aria-pressed={index === 0}
+            aria-pressed={selectedFilter === filter}
             className={`h-8 shrink-0 rounded-full border px-4 text-xs font-normal transition ${
-              index === 0
-                ? 'border-white bg-white text-neutral-950'
+              selectedFilter === filter
+                ? 'border-accent bg-accent text-white shadow-[0_10px_26px_rgba(252,45,4,0.24)]'
                 : 'border-white/10 bg-black/20 text-white/70 hover:border-accent/50 hover:text-white'
             }`}
             key={filter}
+            onClick={() => setSelectedFilter(filter)}
             type="button"
           >
             {filter}

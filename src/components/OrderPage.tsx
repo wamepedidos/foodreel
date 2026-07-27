@@ -1,9 +1,9 @@
 import {
+  ArrowLeft,
   Bike,
   CheckCircle2,
   ChevronDown,
   Clock3,
-  Eye,
   LocateFixed,
   MapPin,
   Minus,
@@ -26,6 +26,7 @@ import { readCustomerProfile } from '../utils/customerProfile';
 import { getOrCreateCustomerSessionId, getOrCreateTableSessionId, makeIdempotencyKey } from '../utils/session';
 import { CustomerNameDialog } from './CustomerNameDialog';
 import { useToast } from './Toast';
+import { WaiterCallButton } from './WaiterCallButton';
 
 const PENDING_IDEMPOTENCY_KEY = 'foodreel-pending-order-idempotency-key';
 const ACTIVE_ORDER_ID = 'foodreel-active-order-id';
@@ -66,8 +67,8 @@ type StoredDeliveryState = {
 };
 
 const orderStyles = {
-  shell: 'order-page-shell h-full overflow-y-auto bg-[#f7f7f6] px-4 pb-[116px] pt-4 text-[#252832]',
-  content: 'mx-auto flex max-w-[520px] flex-col gap-3',
+  shell: 'order-page-shell h-full overflow-y-auto bg-[#f7f7f6] pb-[116px] text-[#252832]',
+  content: 'mx-auto flex max-w-[520px] flex-col gap-3 px-4 pb-4 pt-3',
   card: 'order-white-card rounded-[18px] border border-[#e9e5e1] bg-white shadow-[0_18px_42px_rgba(15,23,42,0.06)]',
   softCard: 'order-white-card rounded-[18px] border border-[#eee9e5] bg-white shadow-[0_14px_36px_rgba(15,23,42,0.05)]',
   body: 'text-xs font-medium leading-5 text-[#737987]',
@@ -450,6 +451,34 @@ function DeliveryRouteMap({
   }, [destination, routeCoordinates]);
 
   return <div className="absolute inset-0 h-full w-full" ref={containerRef} />;
+}
+
+function OrderPageHeader() {
+  const navigate = useNavigate();
+
+  return (
+    <header className="px-4 pt-[calc(18px+env(safe-area-inset-top))]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <button
+            aria-label="Volver al menu"
+            className="grid size-10 shrink-0 place-items-center rounded-[16px] border border-[#e9e5e1] bg-white text-[#252832] shadow-[0_14px_36px_rgba(15,23,42,0.08)] transition hover:border-accent/50 hover:text-accent"
+            onClick={() => navigate('/menu')}
+            type="button"
+          >
+            <ArrowLeft className="size-5" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[1.35rem] font-extrabold leading-tight tracking-normal text-[#252832]">Pedidos</h1>
+            <p className="mt-1 text-[0.68rem] font-medium leading-5 text-[#737987]">
+              Revisa y envia tu orden
+            </p>
+          </div>
+        </div>
+        <WaiterCallButton />
+      </div>
+    </header>
+  );
 }
 
 function ServiceTypeCard({
@@ -921,6 +950,7 @@ export function OrderPage() {
 
   return (
     <div className={orderStyles.shell}>
+      <OrderPageHeader />
       <div className={orderStyles.content}>
         {items.length ? (
           <section className={`p-4 ${orderStyles.card}`}>
@@ -945,6 +975,7 @@ export function OrderPage() {
                 const selectedAdditions = compactAdditions(item.selectedAdditions);
                 const additions = compactAdditions(item.additions).filter((addition) => addition.available);
                 const unitPrice = getItemUnitPrice(item);
+                const showCustomizationPanel = ingredients.length || removableIngredients.length || additions.length;
 
                 return (
                   <article
@@ -997,7 +1028,7 @@ export function OrderPage() {
                       </div>
                     </div>
 
-                    {selected ? (
+                    {selected && showCustomizationPanel ? (
                       <div className="mt-3 space-y-2 rounded-[16px] border border-[#eee9e5] bg-white p-3">
                         {ingredients.length ? (
                           <div>
@@ -1057,13 +1088,6 @@ export function OrderPage() {
                             </div>
                           </div>
                         ) : null}
-
-                        <div className="flex justify-end">
-                          <span className="inline-flex h-8 items-center gap-1.5 rounded-2xl bg-accent/5 px-3 text-[11px] font-black text-accent">
-                            <Eye className="size-3.5" />
-                            Publicable
-                          </span>
-                        </div>
                       </div>
                     ) : null}
                   </article>

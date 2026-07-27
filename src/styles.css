@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  font-family: Poppins, Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: Poppins, ui-sans-serif, system-ui, sans-serif;
   color-scheme: dark;
   --color-background: #0B0B0C;
   --color-background-rgb: 11 11 12;
@@ -99,6 +99,7 @@ body,
 body {
   margin: 0;
   min-width: 0;
+  font-family: Poppins, ui-sans-serif, system-ui, sans-serif;
   color: var(--color-text-primary);
   background:
     radial-gradient(circle at 18% 0%, var(--color-page-glow), transparent 32rem),
@@ -151,7 +152,7 @@ textarea {
 }
 
 .dish-title {
-  font-family: Poppins, Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: Poppins, ui-sans-serif, system-ui, sans-serif;
 }
 
 .bg-accent.text-white,
@@ -419,6 +420,43 @@ textarea {
 .bottom-nav-shell .bottom-nav-active span,
 .bottom-nav-shell .bottom-nav-active svg {
   color: rgb(var(--color-primary-rgb)) !important;
+}
+
+.bottom-nav-shell .bottom-nav-badge {
+  color: #fff !important;
+}
+
+.bottom-nav-shell .bottom-nav-active .bottom-nav-badge {
+  background: #fff !important;
+  color: rgb(var(--color-primary-rgb)) !important;
+}
+
+.menu-app-header,
+.menu-app-header .menu-back-button {
+  color-scheme: light;
+}
+
+.menu-app-header .menu-back-button {
+  appearance: none;
+  background: #fff !important;
+  background-color: #fff !important;
+  border-color: #e9e5e1 !important;
+  color: #252832 !important;
+}
+
+.menu-app-header .menu-back-button svg {
+  color: #252832 !important;
+  stroke: #252832 !important;
+}
+
+.menu-app-header .menu-back-button:hover {
+  border-color: rgba(252, 45, 4, 0.4) !important;
+  color: rgb(var(--color-primary-rgb)) !important;
+}
+
+.menu-app-header .menu-back-button:hover svg {
+  color: rgb(var(--color-primary-rgb)) !important;
+  stroke: rgb(var(--color-primary-rgb)) !important;
 }
 
 .order-page-frame,

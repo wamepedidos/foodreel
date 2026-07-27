@@ -1,4 +1,4 @@
-import { ArrowLeft, ShoppingBag, Utensils } from 'lucide-react';
+import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { restaurantConfig } from '../../config/restaurant';
@@ -187,28 +187,39 @@ export function CreateExperiencePage() {
   };
 
   return (
-    <div className="h-full overflow-y-auto px-4 pb-[112px] pt-4">
-      <div className="mx-auto max-w-[640px]">
-        <div className="mb-4 flex items-center gap-3">
+    <div className="h-full overflow-y-auto bg-base pb-[76px] text-white">
+      <header className="px-4 pt-[calc(18px+env(safe-area-inset-top))]">
+        <div className="flex items-start justify-between gap-3">
           <button
-            aria-label="Volver"
-            className="grid size-10 place-items-center rounded-2xl border border-white/10 bg-surface text-white"
+            aria-label="Volver a Momentos"
+            className="grid size-10 shrink-0 place-items-center rounded-[16px] border border-white/10 bg-surface text-white transition hover:border-accent/50 hover:text-accent"
             onClick={() => navigate('/comunidad')}
             type="button"
           >
             <ArrowLeft className="size-5" />
           </button>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Mesa {restaurantConfig.tableNumber}</p>
-            <h1 className="truncate text-xl font-black text-white">Comparte tu experiencia</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[1.35rem] font-extrabold leading-tight tracking-normal text-white">Crear momento</h1>
+            <p className="mt-1 text-[0.68rem] font-medium leading-5 text-white/58">Comparte lo mejor de tu visita</p>
           </div>
+          <button
+            className="flex h-10 shrink-0 items-center justify-center rounded-[16px] bg-accent px-3 text-[0.72rem] font-bold text-white shadow-[0_14px_36px_rgba(252,45,4,0.30)] transition hover:brightness-110 disabled:opacity-60"
+            disabled={publishing}
+            onClick={publish}
+            type="button"
+          >
+            Publicar
+          </button>
         </div>
+      </header>
 
-        <section className="space-y-4 rounded-[24px] border border-white/10 bg-card p-4 shadow-2xl">
-          <div className="rounded-[20px] border border-accent/25 bg-accent/10 p-4">
-            <h2 className="text-base font-black text-white">{'Por favor, crea una publicaci\u00f3n y ay\u00fadanos a crecer.'}</h2>
-            <p className="mt-2 text-sm leading-5 text-white/75">
-              {'Cu\u00e9ntales a otros clientes qu\u00e9 est\u00e1s disfrutando y comparte tu momento en el restaurante.'}
+      <main className="mx-auto grid max-w-[520px] gap-2 px-4 pb-4 pt-3">
+        <section className="grid gap-2 rounded-[20px] border border-white/10 bg-card p-3 shadow-2xl shadow-black/20">
+          <div className="rounded-[16px] border border-accent/25 bg-accent/10 p-2.5">
+            <p className="text-[11px] font-black uppercase leading-4 tracking-[0.14em] text-accent">Mesa {restaurantConfig.tableNumber}</p>
+            <h2 className="mt-0.5 text-sm font-black leading-5 text-white">{'Tu recomendacion ayuda a otros clientes a elegir mejor.'}</h2>
+            <p className="text-[11px] font-medium leading-4 text-white/70">
+              Foto o frase corta. Nosotros revisamos antes de publicar.
             </p>
           </div>
 
@@ -220,33 +231,34 @@ export function CreateExperiencePage() {
           />
           <ExperienceCaptionInput error={errors.caption} onChange={setCaption} value={caption} />
 
-          <div className="rounded-[20px] border border-white/10 bg-surface p-3">
-            <div className="flex items-center gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-accent/15 text-accent">
-                {cartDish ? <ShoppingBag className="size-5" /> : <Utensils className="size-5" />}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-black text-white">Plato relacionado automaticamente</p>
-                {cartDish ? (
-                  <p className="truncate text-xs text-muted">
-                    {cartDish.name} · {formatCurrency(cartDish.price)} · x{cartDish.quantity}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted">No hay platos en el carrito. Se publicara como experiencia general.</p>
-                )}
-              </div>
-            </div>
-          </div>
-
           <ExperienceConsent accepted={consentAccepted} error={errors.consent} onChange={setConsentAccepted} />
           {progressLabel ? <UploadProgress label={progressLabel} progress={progress} /> : null}
-          {errors.submit ? <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">{errors.submit}</p> : null}
+          {errors.submit ? <p className="rounded-[18px] border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">{errors.submit}</p> : null}
 
-          <div className="sticky bottom-[88px] z-30 rounded-[20px] border border-white/10 bg-base/90 p-2 backdrop-blur">
+          <div className="grid gap-2 rounded-[18px] border border-accent/20 bg-accent/5 p-2">
             <PublishExperienceButton disabled={publishing} onClick={publish} publishing={publishing} />
+            <p className="text-center text-[11px] font-medium leading-4 text-white/58">
+              Tu momento queda en revision antes de aparecer en Comunidad.
+            </p>
           </div>
+
+          {cartDish ? (
+            <div className="rounded-[18px] border border-white/10 bg-surface p-3">
+              <div className="flex items-center gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-[14px] bg-accent/15 text-accent">
+                  <ShoppingBag className="size-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-black text-white">Plato relacionado</p>
+                  <p className="truncate text-[11px] font-medium leading-4 text-muted">
+                    {cartDish.name} - {formatCurrency(cartDish.price)} - x{cartDish.quantity}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </section>
-      </div>
+      </main>
 
       <CustomerNameDialog
         description="Usaremos este nombre visible para tus publicaciones y pedidos de esta mesa."

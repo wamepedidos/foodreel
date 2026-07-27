@@ -21,7 +21,7 @@ export function QuantitySelector({
       className={
         variant === 'reel'
           ? 'flex h-10 min-w-0 w-full items-center justify-between rounded-[16px] bg-accent px-2 text-xs font-bold text-white shadow-[0_14px_36px_rgba(252,45,4,0.30)]'
-          : 'flex h-12 min-w-0 flex-1 items-center justify-between rounded-2xl bg-accent px-2 text-sm font-bold text-white'
+          : 'flex h-11 min-w-0 flex-1 items-center justify-between rounded-[16px] bg-accent px-2 text-sm font-bold text-white'
       }
     >
       <div className="flex items-center gap-1">

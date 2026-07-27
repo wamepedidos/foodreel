@@ -4,7 +4,6 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import OrderApp from './OrderApp';
-import { CommunityPage } from './components/experience/CommunityPage';
 import { CreateExperiencePage } from './components/experience/CreateExperiencePage';
 import { ExperienceDetailPage } from './components/experience/ExperienceDetailPage';
 import { MomentosMockupPage } from './components/experience/MomentosMockupPage';
@@ -42,7 +41,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             element={
               <ToastProvider>
                 <AppLayout restaurant={restaurantConfig}>
-                  <CommunityPage />
+                  <MomentosMockupPage />
                 </AppLayout>
               </ToastProvider>
             }

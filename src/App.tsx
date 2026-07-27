@@ -13,6 +13,7 @@ export default function App() {
   const [dishes, setDishes] = useState<Dish[]>(() => cachedMenuState?.dishes ?? []);
   const [hasMore, setHasMore] = useState(() => cachedMenuState?.hasMore ?? false);
   const [nextOffset, setNextOffset] = useState(() => cachedMenuState?.nextOffset ?? 0);
+  const [initialMenuLoading, setInitialMenuLoading] = useState(() => !cachedMenuState);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
 
@@ -31,11 +32,13 @@ export default function App() {
           setHasMore(nextState.hasMore);
           setNextOffset(nextState.nextOffset);
           setError('');
+          setInitialMenuLoading(false);
         }
       })
       .catch((caughtError) => {
         if (mounted) {
           setError(caughtError instanceof Error ? caughtError.message : 'No pudimos cargar el menu.');
+          setInitialMenuLoading(false);
         }
       });
     return () => {
@@ -90,7 +93,11 @@ export default function App() {
 
   return (
     <ToastProvider>
-      <AppLayout restaurant={restaurantConfig}>
+      <AppLayout
+        hideBottomNavigation={initialMenuLoading && !dishes.length}
+        hideHeader={initialMenuLoading && !dishes.length}
+        restaurant={restaurantConfig}
+      >
         {error ? (
           <div className="grid h-full place-items-center px-5 text-center">
             <div>
@@ -108,7 +115,7 @@ export default function App() {
         ) : dishes.length ? (
           <MenuExperience dishes={dishes} hasMore={hasMore} loadingMore={loadingMore} onLoadMore={loadMoreDishes} />
         ) : (
-          <div className="h-full overflow-hidden pb-[84px]">
+          <div className="h-full overflow-hidden">
             <LoadingSkeleton />
           </div>
         )}

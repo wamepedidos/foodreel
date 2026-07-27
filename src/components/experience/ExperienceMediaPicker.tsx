@@ -49,22 +49,22 @@ export function ExperienceMediaPicker({
 
   return (
     <div>
-      <div className="mb-3">
-        <h2 className="text-base font-black text-white">Foto de tu experiencia</h2>
-        <p className="text-xs text-muted">Puedes tomar una foto, elegir una de la galeria y cambiarla antes de publicar.</p>
+      <div className="mb-2">
+        <h2 className="text-sm font-black leading-5 text-white">Foto de tu experiencia</h2>
+        <p className="text-[11px] leading-4 text-muted">Toma una foto o elige una de tu galeria.</p>
       </div>
 
-      <div className="overflow-hidden rounded-[20px] border border-white/10 bg-base">
+      <div className="overflow-hidden rounded-[18px] border border-white/10 bg-base">
         {media ? (
-          <img alt="Vista previa de la experiencia" className="aspect-[4/5] w-full object-cover" src={media.previewUrl} />
+          <img alt="Vista previa de la experiencia" className="aspect-[16/7] w-full object-cover" src={media.previewUrl} />
         ) : (
-          <div className="grid aspect-[4/5] place-items-center p-6 text-center">
+          <div className="grid aspect-[16/7] place-items-center p-4 text-center">
             <div>
-              <div className="mx-auto grid size-14 place-items-center rounded-full bg-accent/15 text-accent">
-                <ImagePlus className="size-7" />
+              <div className="mx-auto grid size-10 place-items-center rounded-full bg-accent/15 text-accent">
+                <ImagePlus className="size-5" />
               </div>
-              <p className="mt-3 text-sm font-bold text-white">Sin fotografia</p>
-              <p className="mt-1 text-xs text-muted">La publicacion tambien puede ser solo un comentario.</p>
+              <p className="mt-1.5 text-sm font-bold text-white">Agrega una foto</p>
+              <p className="text-[11px] text-muted">Tambien puedes publicar solo un comentario.</p>
             </div>
           </div>
         )}
@@ -72,9 +72,9 @@ export function ExperienceMediaPicker({
 
       {error ? <p className="mt-3 rounded-2xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">{error}</p> : null}
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-3 grid grid-cols-2 gap-2">
         <button
-          className="flex h-11 items-center justify-center gap-2 rounded-2xl bg-accent text-sm font-black text-white"
+          className="flex h-10 items-center justify-center gap-2 rounded-[16px] bg-accent text-xs font-black text-white"
           onClick={() => {
             if ('mediaDevices' in navigator) {
               setCameraOpen(true);
@@ -88,7 +88,7 @@ export function ExperienceMediaPicker({
           Tomar foto
         </button>
         <button
-          className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-surface text-sm font-black text-white"
+          className="flex h-10 items-center justify-center gap-2 rounded-[16px] border border-white/10 bg-surface text-xs font-black text-white"
           onClick={() => galleryInputRef.current?.click()}
           type="button"
         >
@@ -98,7 +98,7 @@ export function ExperienceMediaPicker({
       </div>
 
       {media ? (
-        <button className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold text-red-200" onClick={removePhoto} type="button">
+        <button className="mt-2 flex h-9 w-full items-center justify-center gap-2 rounded-[16px] text-xs font-bold text-red-200" onClick={removePhoto} type="button">
           <Trash2 className="size-4" />
           Eliminar fotografia
         </button>

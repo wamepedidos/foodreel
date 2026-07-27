@@ -78,15 +78,15 @@ export function ExperienceDetailPage() {
   }, [post, userId]);
 
   return (
-    <div className="h-full overflow-y-auto px-4 pb-[108px] pt-4">
-      <div className="mx-auto max-w-[680px]">
-        <div className="mb-4 flex items-center gap-3">
-          <button aria-label="Volver" className="grid size-10 place-items-center rounded-2xl border border-white/10 bg-surface text-white" onClick={() => navigate('/comunidad')} type="button">
+    <div className="h-full overflow-y-auto bg-base px-4 pb-[108px] pt-[calc(18px+env(safe-area-inset-top))]">
+      <div className="mx-auto max-w-[520px]">
+        <div className="mb-3 flex items-start gap-3">
+          <button aria-label="Volver a Momentos" className="grid size-10 shrink-0 place-items-center rounded-[16px] border border-white/10 bg-surface text-white transition hover:border-accent/50 hover:text-accent" onClick={() => navigate('/comunidad')} type="button">
             <ArrowLeft className="size-5" />
           </button>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Mesa {restaurantConfig.tableNumber}</p>
-            <h1 className="text-xl font-black text-white">Experiencia</h1>
+          <div className="min-w-0">
+            <h1 className="text-[1.35rem] font-extrabold leading-tight tracking-normal text-white">Experiencia</h1>
+            <p className="mt-1 text-[0.68rem] font-medium leading-5 text-white/58">Mesa {restaurantConfig.tableNumber}</p>
           </div>
         </div>
 

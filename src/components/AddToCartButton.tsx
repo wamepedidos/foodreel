@@ -20,7 +20,7 @@ export function AddToCartButton({ dish, variant = 'compact' }: { dish: Dish; var
       className={
         variant === 'reel'
           ? 'flex h-10 min-w-0 w-full items-center justify-center gap-1.5 rounded-[16px] bg-accent px-3 text-[0.78rem] font-bold text-white shadow-[0_14px_36px_rgba(252,45,4,0.30)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50'
-          : 'flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl bg-accent px-3 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50'
+          : 'flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-[16px] bg-accent px-3 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50'
       }
       disabled={!dish.available}
       onClick={() => {

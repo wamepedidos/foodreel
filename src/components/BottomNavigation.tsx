@@ -1,11 +1,12 @@
-import { CirclePlay, ShoppingCart, Sparkles } from 'lucide-react';
+import { CirclePlay, ShoppingBag, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCartStore } from '../store/useCartStore';
 import { useMenuStore } from '../store/useMenuStore';
 
 const navItems = [
   { label: 'Momentos', icon: Sparkles, path: '/comunidad' },
-  { label: 'Men\u00fa', icon: CirclePlay, path: '/menu' }
+  { label: 'Men\u00fa', icon: CirclePlay, path: '/menu' },
+  { label: 'Pedido', icon: ShoppingBag, path: '/pedido' }
 ];
 
 export function BottomNavigation() {
@@ -14,42 +15,24 @@ export function BottomNavigation() {
   const setViewMode = useMenuStore((state) => state.setViewMode);
   const location = useLocation();
   const navigate = useNavigate();
-  const onOrderPage = location.pathname === '/pedido';
-  const mockupRoute = location.pathname === '/comunidad/mockup';
-  const showFloatingCart = !mockupRoute && !onOrderPage && !(location.pathname === '/menu' && viewMode === 'reel');
+  const cartBadgeLabel = totalQuantity > 99 ? '99+' : String(totalQuantity);
 
   return (
     <nav
-      className={`bottom-nav-shell fixed inset-x-0 bottom-0 z-50 mx-auto border-t px-8 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-2xl md:absolute ${
-        mockupRoute ? 'max-w-[520px]' : viewMode === 'grid' ? 'max-w-[1180px]' : 'max-w-[520px]'
-      }`}
+      className="bottom-nav-shell fixed inset-x-0 bottom-0 z-50 mx-auto max-w-[520px] border-t px-8 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-2xl md:absolute"
     >
-      {showFloatingCart ? (
-        <button
-          aria-label="Ver carrito"
-          className="absolute right-4 top-[-88px] grid size-[66px] place-items-center rounded-full border border-white/10 bg-black/[0.56] text-white shadow-[0_18px_50px_rgba(0,0,0,0.42)] backdrop-blur-xl transition hover:border-accent/60"
-          onClick={() => navigate('/pedido')}
-          type="button"
-        >
-          <ShoppingCart className="size-8" strokeWidth={2.2} />
-          {totalQuantity > 0 ? (
-            <span className="absolute right-1.5 top-1.5 grid min-w-7 place-items-center rounded-full bg-accent px-1.5 text-xs font-bold text-white">
-              {totalQuantity}
-            </span>
-          ) : null}
-        </button>
-      ) : null}
-
-      <div className="grid grid-cols-2 items-end gap-2">
+      <div className="grid grid-cols-3 items-end gap-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = item.path
             ? location.pathname === item.path ||
               (item.path === '/comunidad' && (location.pathname.startsWith('/experience') || location.pathname.startsWith('/comunidad')))
             : false;
+          const ariaLabel = item.path === '/pedido' && totalQuantity > 0 ? `Pedido, ${totalQuantity} productos` : item.label;
 
           return (
             <button
+              aria-label={ariaLabel}
               aria-current={active ? 'page' : undefined}
               className={`relative flex min-h-[34px] flex-col items-center justify-end gap-0.5 rounded-none border-0 bg-transparent px-1 shadow-none transition ${
                 active ? 'bottom-nav-active' : 'text-white hover:text-accent'
@@ -66,11 +49,21 @@ export function BottomNavigation() {
               type="button"
             >
               <span
-                className={`grid place-items-center ${
-                  active ? 'bottom-nav-active size-6 rounded-md border border-accent shadow-[0_0_12px_rgba(252,45,4,0.34)]' : 'size-6 text-white'
+                className={`relative grid place-items-center ${
+                  active ? 'bottom-nav-active size-6' : 'size-6 text-white'
                 }`}
               >
-                <Icon className={active ? 'size-4' : 'size-[18px]'} strokeWidth={1.8} />
+                <Icon className="size-[18px]" strokeWidth={1.8} />
+                {item.path === '/pedido' && totalQuantity > 0 ? (
+                  <span
+                    aria-hidden="true"
+                    className={`bottom-nav-badge absolute -right-2 -top-1 grid min-w-4 place-items-center rounded-full px-1 text-[9px] font-black leading-4 ${
+                      active ? 'bg-white text-accent' : 'bg-accent text-white'
+                    }`}
+                  >
+                    {cartBadgeLabel}
+                  </span>
+                ) : null}
               </span>
               <span className="text-[10px] font-normal leading-none">{item.label}</span>
             </button>

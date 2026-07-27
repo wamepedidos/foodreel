@@ -135,9 +135,9 @@ export function GridMenu({
   }
 
   return (
-    <div className="h-full overflow-y-auto px-3 pb-[96px] pt-3 md:px-5">
-      <div className="mx-auto max-w-[1120px]">
-        <div className="sticky top-0 z-20 -mx-3 bg-base/92 px-3 pb-3 pt-1 backdrop-blur md:-mx-5 md:px-5">
+    <div className="h-full overflow-y-auto px-2 pb-[96px] pt-3 min-[430px]:px-3">
+      <div className="mx-auto max-w-[520px]">
+        <div className="sticky top-0 z-20 -mx-2 bg-base/95 px-2 pb-3 pt-1 backdrop-blur min-[430px]:-mx-3 min-[430px]:px-3">
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
               <MenuSearch value={query} onChange={setQuery} onClear={() => setQuery('')} />
@@ -150,21 +150,21 @@ export function GridMenu({
         </div>
 
         {loading ? (
-          <div className="grid auto-rows-fr grid-cols-1 gap-3 pt-3 min-[360px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 items-start gap-2 pt-3 min-[360px]:grid-cols-2">
             {Array.from({ length: 8 }).map((_, index) => (
               <GridDishSkeleton key={index} />
             ))}
           </div>
         ) : filteredDishes.length ? (
           <>
-            <div className="grid auto-rows-fr grid-cols-1 gap-3 pt-3 min-[360px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-1 items-start gap-2 pt-3 min-[360px]:grid-cols-2">
               {filteredDishes.map((dish) => (
                 <GridDishCard dish={dish} key={dish.id} onFocus={setActiveDishId} />
               ))}
             </div>
             <div className="h-16" ref={loadMoreRef}>
               {loadingMore ? (
-                <div className="grid auto-rows-fr grid-cols-1 gap-3 pt-3 min-[360px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-1 items-start gap-2 pt-3 min-[360px]:grid-cols-2">
                   {Array.from({ length: 4 }).map((_, index) => (
                     <GridDishSkeleton key={index} />
                   ))}

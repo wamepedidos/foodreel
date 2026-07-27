@@ -22,7 +22,7 @@ export default {
         glow: '0 18px 50px rgb(var(--color-primary-rgb) / 0.24)'
       },
       fontFamily: {
-        sans: ['Poppins', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         display: ['Georgia', 'Cambria', 'Times New Roman', 'serif']
       }
     }

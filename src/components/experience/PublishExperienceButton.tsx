@@ -11,7 +11,7 @@ export function PublishExperienceButton({
 }) {
   return (
     <button
-      className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 text-sm font-black text-white shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex h-11 w-full items-center justify-center gap-2 rounded-[16px] bg-accent px-4 text-sm font-black text-white shadow-[0_14px_36px_rgba(252,45,4,0.30)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
       disabled={disabled}
       onClick={onClick}
       type="button"

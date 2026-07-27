@@ -13,23 +13,25 @@ export function ExperienceConsent({
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
-    <div className="rounded-[20px] border border-white/10 bg-surface p-3">
+    <div className="rounded-[18px] border border-white/10 bg-surface p-2.5">
       <label className="flex items-start gap-3">
         <input
           checked={accepted}
-          className="mt-1 size-5 accent-accent"
+          className="mt-0.5 size-5 accent-accent"
           onChange={(event) => onChange(event.target.checked)}
           type="checkbox"
         />
-        <span className="text-sm leading-5 text-white">
+        <span className="text-xs font-medium leading-4 text-white">
           {'Autorizo que esta fotograf\u00eda y comentario sean mostrados dentro de la plataforma del restaurante.'}
         </span>
       </label>
-      <p className="mt-3 text-xs leading-5 text-muted">{'Evita publicar fotograf\u00edas de otras personas sin su autorizaci\u00f3n.'}</p>
-      <button className="mt-2 inline-flex items-center gap-2 text-xs font-bold text-accent" onClick={() => setModalOpen(true)} type="button">
-        <ShieldCheck className="size-4" />
-        Ver condiciones de publicacion
-      </button>
+      <div className="mt-1.5 flex items-center justify-between gap-3">
+        <p className="min-w-0 text-[11px] leading-4 text-muted">{'Publica contenido propio y respetuoso.'}</p>
+        <button className="inline-flex shrink-0 items-center gap-1.5 text-[11px] font-bold text-accent" onClick={() => setModalOpen(true)} type="button">
+          <ShieldCheck className="size-4" />
+          Condiciones
+        </button>
+      </div>
       {error ? <p className="mt-2 text-sm text-red-100">{error}</p> : null}
 
       {modalOpen ? (

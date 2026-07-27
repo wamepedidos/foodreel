@@ -1,91 +1,31 @@
-import { Grid2X2, RectangleVertical, Send, Utensils } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { RestaurantConfig } from '../types';
-import { useMenuStore } from '../store/useMenuStore';
-import { ThemeToggle } from '../theme/ThemeToggle';
 import { WaiterCallButton } from './WaiterCallButton';
-import { incrementMenuSharesCount } from '../services/dishesService';
-import { useToast } from './Toast';
 
 export function RestaurantHeader({ restaurant }: { restaurant: RestaurantConfig }) {
-  const viewMode = useMenuStore((state) => state.viewMode);
-  const setViewMode = useMenuStore((state) => state.setViewMode);
-  const [logoBroken, setLogoBroken] = useState(false);
-  const { showToast } = useToast();
-  const nextMode = viewMode === 'reel' ? 'grid' : 'reel';
-  const toggleLabel = viewMode === 'reel' ? 'Abrir vista mosaico' : 'Volver a vista Reel';
-  const showLogoImage = Boolean(restaurant.logoSrc && !logoBroken);
-  const shareMenu = async () => {
-    const shareData = {
-      title: restaurant.restaurantName,
-      text: `Carta digital de ${restaurant.restaurantName}`,
-      url: `${window.location.origin}/menu`
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-        void incrementMenuSharesCount('nativeShare');
-      } else {
-        await navigator.clipboard.writeText(shareData.url);
-        void incrementMenuSharesCount('copiedLink');
-      }
-      showToast('Carta compartida');
-    } catch {
-      showToast('No se pudo compartir ahora');
-    }
-  };
+  const navigate = useNavigate();
 
   return (
-    <header className="relative z-40 flex min-h-[68px] items-center justify-between gap-2 border-b border-white/10 bg-base/95 px-3 pb-3 pt-[calc(14px+env(safe-area-inset-top))] backdrop-blur sm:px-4">
-      <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
-        <div
-          className={`grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl shadow-glow ${
-            showLogoImage ? 'bg-paper p-1.5' : 'bg-accent text-lg font-black text-contrast'
-          }`}
-        >
-          {showLogoImage ? (
-            <img
-              alt=""
-              aria-hidden="true"
-              className="block max-h-full max-w-full object-contain"
-              onError={() => setLogoBroken(true)}
-              src={restaurant.logoSrc}
-            />
-          ) : (
-            restaurant.logoText || <Utensils className="size-6" />
-          )}
+    <header className="menu-app-header relative z-40 border-b border-black/5 bg-[#f7f7f6] px-4 pb-3 pt-[calc(18px+env(safe-area-inset-top))] text-[#252832]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <button
+            aria-label="Volver a momentos"
+            className="menu-back-button grid size-10 shrink-0 place-items-center rounded-[16px] border border-[#e9e5e1] bg-white text-[#252832] shadow-[0_14px_36px_rgba(15,23,42,0.08)] transition hover:border-accent/50 hover:text-accent"
+            onClick={() => navigate('/comunidad')}
+            type="button"
+          >
+            <ArrowLeft className="size-5" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[1.35rem] font-extrabold leading-tight tracking-normal text-[#252832]">Menú</h1>
+            <p className="mt-1 truncate text-[0.68rem] font-medium leading-5 text-[#737987]">
+              {restaurant.restaurantName} - Mesa {restaurant.tableNumber}
+            </p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-base font-extrabold leading-tight sm:text-lg">{restaurant.brandName}</p>
-          <p className="truncate text-[11px] leading-4 text-muted sm:text-xs">
-            {restaurant.restaurantName} · Mesa {restaurant.tableNumber}
-          </p>
-        </div>
-      </div>
-      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
         <WaiterCallButton />
-        <div className="max-[300px]:hidden">
-          <ThemeToggle />
-        </div>
-        <button
-          aria-label="Compartir carta"
-          className="grid size-10 place-items-center rounded-2xl border border-white/10 bg-surface text-accent transition hover:border-accent/50 max-[300px]:hidden"
-          onClick={shareMenu}
-          title="Compartir carta"
-          type="button"
-        >
-          <Send className="size-5" />
-        </button>
-        <button
-          aria-label={toggleLabel}
-          className="grid size-10 place-items-center rounded-2xl border border-white/10 bg-surface text-accent transition hover:border-accent/50"
-          onClick={() => setViewMode(nextMode)}
-          title={toggleLabel}
-          type="button"
-        >
-          {viewMode === 'reel' ? <Grid2X2 className="size-5" /> : <RectangleVertical className="size-5" />}
-        </button>
       </div>
     </header>
   );
