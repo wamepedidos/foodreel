@@ -9,6 +9,7 @@ import { GridDishCard } from './GridDishCard';
 import { GridDishSkeleton } from './GridDishSkeleton';
 import { MenuSearch } from './MenuSearch';
 import { useMenuStore } from '../store/useMenuStore';
+import { compareMenuDishes, getOrderedMenuCategories, normalizeMenuCategory } from '../utils/menuOrdering';
 
 export function GridMenu({
   dishes,
@@ -31,16 +32,24 @@ export function GridMenu({
   const selectedCategory = useMenuStore((state) => state.selectedCategory);
   const setSelectedCategory = useMenuStore((state) => state.setSelectedCategory);
   const setActiveDishId = useMenuStore((state) => state.setActiveDishId);
+  const categories = useMemo(() => getOrderedMenuCategories(dishes), [dishes]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setLoading(false), 520);
     return () => window.clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (selectedCategory === 'Todos' || categories.some((category) => normalizeMenuCategory(category) === normalizeMenuCategory(selectedCategory))) {
+      return;
+    }
+    setSelectedCategory('Todos');
+  }, [categories, selectedCategory, setSelectedCategory]);
+
   const filteredDishes = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     const results = dishes.filter((dish) => {
-      const matchesCategory = selectedCategory === 'Todos' || dish.category === selectedCategory;
+      const matchesCategory = selectedCategory === 'Todos' || normalizeMenuCategory(dish.category) === normalizeMenuCategory(selectedCategory);
       const searchable = [dish.name, dish.category, dish.description, dish.shortDescription, ...dish.ingredients]
         .join(' ')
         .toLowerCase();
@@ -73,7 +82,7 @@ export function GridMenu({
         const bBoost = b.tag?.toLowerCase().includes('pedido') ? 1 : 0;
         return bBoost - aBoost || b.viewsCount - a.viewsCount;
       }
-      return 0;
+      return compareMenuDishes(a, b);
     });
   }, [activeFilter, dishes, query, selectedCategory]);
 
@@ -145,7 +154,7 @@ export function GridMenu({
             <FilterButton activeFilter={activeFilter} onClick={() => setFilterOpen(true)} />
           </div>
           <div className="mt-3">
-            <CategoryTabs />
+            <CategoryTabs categories={categories} />
           </div>
         </div>
 

@@ -21,6 +21,7 @@ import { EmptyState } from '../components/AdminLayout';
 import { archiveDish, duplicateDish, subscribeToDishes, updateDishAvailability } from '../../services/dishesService';
 import { formatCurrency } from '../../utils/format';
 import { useToast } from '../../components/Toast';
+import { getMenuCategoryRank, getMenuSortOrder } from '../../utils/menuOrdering';
 
 type StateFilter = 'all' | DishStatus | 'featured' | 'new' | 'created';
 
@@ -38,7 +39,10 @@ export function MenuManagementPage() {
     };
   }, []);
 
-  const categories = useMemo(() => ['Todas', ...Array.from(new Set(dishes.map((dish) => dish.categoryId)))], [dishes]);
+  const categories = useMemo(
+    () => ['Todas', ...Array.from(new Set(dishes.map((dish) => dish.categoryId))).sort((a, b) => getMenuCategoryRank(a) - getMenuCategoryRank(b) || a.localeCompare(b, 'es'))],
+    [dishes]
+  );
   const filteredDishes = useMemo(() => {
     return dishes
       .filter((dish) => dish.status !== 'archived')
@@ -54,7 +58,12 @@ export function MenuManagementPage() {
         return dish.status === stateFilter;
       })
       .filter((dish) => `${dish.title} ${dish.categoryId} ${dish.features.join(' ')}`.toLowerCase().includes(query.toLowerCase()))
-      .sort((a, b) => a.sortOrder - b.sortOrder);
+      .sort(
+        (a, b) =>
+          getMenuCategoryRank(a.categoryId) - getMenuCategoryRank(b.categoryId) ||
+          getMenuSortOrder(a.sortOrder) - getMenuSortOrder(b.sortOrder) ||
+          a.title.localeCompare(b.title, 'es')
+      );
   }, [category, dishes, query, stateFilter]);
 
   const handleStatus = async (dishId: string, status: DishStatus, message: string) => {

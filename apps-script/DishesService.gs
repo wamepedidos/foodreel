@@ -1,9 +1,12 @@
+var DISHES_MENU_CATEGORY_ORDER = ['Entrada', 'Plato fuerte', 'Bebida', 'Postre'];
+
 function getMenu(payload) {
   var restaurantId = payload.restaurantId || APP_CONFIG.DEFAULT_RESTAURANT_ID;
-  var limit = Math.min(Math.max(toNumber(payload.limit) || 10, 1), 10);
+  var limit = Math.min(Math.max(toNumber(payload.limit) || 50, 1), 50);
   var offset = Math.max(toNumber(payload.offset) || 0, 0);
   var cache = CacheService.getScriptCache();
-  var cacheKey = 'menu:v2:' + restaurantId + ':offset:' + offset + ':limit:' + limit;
+  var cacheVersion = PropertiesService.getScriptProperties().getProperty('MENU_CACHE_VERSION') || '1';
+  var cacheKey = 'menu:v3:' + cacheVersion + ':' + restaurantId + ':offset:' + offset + ':limit:' + limit;
   var cached = cache.get(cacheKey);
   if (cached) return JSON.parse(cached);
   var restaurant = allRows('RESTAURANTS').filter(function(row) {
@@ -12,12 +15,12 @@ function getMenu(payload) {
   var categories = allRows('CATEGORIES').filter(function(row) {
     return row.restaurantId === restaurantId && toBool(row.active);
   }).sort(function(a, b) {
-    return toNumber(a.sortOrder) - toNumber(b.sortOrder);
+    return compareMenuCategoryIds(a.name || a.id, b.name || b.id) || toNumber(a.sortOrder) - toNumber(b.sortOrder);
   }).map(categoryToFrontend);
   var activeDishes = allRows('DISHES').filter(function(row) {
     return row.restaurantId === restaurantId && row.status === 'active';
   }).sort(function(a, b) {
-    return toNumber(a.sortOrder) - toNumber(b.sortOrder);
+    return compareMenuDishes(a, b);
   });
   var pageRows = activeDishes.slice(offset, offset + limit);
   var dishes = pageRows.map(dishToPublic);
@@ -53,7 +56,7 @@ function getDish(payload) {
 
 function getDishBadgeMetadata(payload) {
   requireFields(payload, ['restaurantId', 'dishIds']);
-  var requestedIds = Array.isArray(payload.dishIds) ? payload.dishIds.slice(0, 10).map(String) : [];
+  var requestedIds = Array.isArray(payload.dishIds) ? payload.dishIds.slice(0, 50).map(String) : [];
   var requestedLookup = {};
   requestedIds.forEach(function(id) {
     requestedLookup[id] = true;
@@ -69,7 +72,7 @@ function getDishes(payload) {
   return {
     dishes: allRows('DISHES').filter(function(row) {
       return row.restaurantId === restaurantId;
-    }).map(dishToAdmin)
+    }).sort(compareMenuDishes).map(dishToAdmin)
   };
 }
 
@@ -129,8 +132,42 @@ function registerDishAddedToOrder(payload) {
 }
 
 function invalidateMenu(restaurantId) {
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty('MENU_CACHE_VERSION', String(Date.now()));
   CacheService.getScriptCache().remove('menu:' + restaurantId);
   CacheService.getScriptCache().remove('menu:v2:' + restaurantId + ':offset:0:limit:10');
+  CacheService.getScriptCache().remove('menu:v3:' + restaurantId + ':offset:0:limit:10');
+}
+
+function normalizeMenuCategory(categoryId) {
+  var raw = String(categoryId || '').trim();
+  var key = raw.toLowerCase();
+  if (key === 'entrada' || key === 'entradas' || key === 'cat-entrada' || key === 'cat-entradas') return 'Entrada';
+  if (key === 'plato fuerte' || key === 'platos fuertes' || key === 'cat-plato-fuerte' || key === 'cat-platos-fuertes') return 'Plato fuerte';
+  if (key === 'bebida' || key === 'bebidas' || key === 'cat-bebida' || key === 'cat-bebidas') return 'Bebida';
+  if (key === 'postre' || key === 'postres' || key === 'cat-postre' || key === 'cat-postres') return 'Postre';
+  return raw;
+}
+
+function getMenuCategoryRank(categoryId) {
+  var normalized = normalizeMenuCategory(categoryId);
+  var index = DISHES_MENU_CATEGORY_ORDER.indexOf(normalized);
+  return index === -1 ? DISHES_MENU_CATEGORY_ORDER.length : index;
+}
+
+function compareMenuCategoryIds(a, b) {
+  var rankDelta = getMenuCategoryRank(a) - getMenuCategoryRank(b);
+  if (rankDelta !== 0) return rankDelta;
+  return String(a || '').localeCompare(String(b || ''));
+}
+
+function compareMenuDishes(a, b) {
+  return compareMenuCategoryIds(a.categoryId, b.categoryId) || getMenuSortOrder(a.sortOrder) - getMenuSortOrder(b.sortOrder) || String(a.title || '').localeCompare(String(b.title || ''));
+}
+
+function getMenuSortOrder(sortOrder) {
+  var parsed = toNumber(sortOrder);
+  return parsed > 0 ? parsed : 999999;
 }
 
 function dishFromFrontend(input, createdAt) {
@@ -175,39 +212,41 @@ function dishFromFrontend(input, createdAt) {
 }
 
 function dishToPublic(row) {
+  var ingredients = parseJson(row.ingredientsJson, []);
   return {
     id: row.id,
     name: row.title,
-    category: row.categoryId,
+    category: normalizeMenuCategory(row.categoryId),
     shortDescription: row.shortDescription,
     description: row.description,
     price: toNumber(row.price),
-      image: row.mainImageUrl || row.videoThumbnailUrl,
-      video: row.videoUrl || undefined,
-      ingredients: parseJson(row.ingredientsJson, []),
-      removableIngredients: parseJson(row.removableIngredientsJson, parseJson(row.ingredientsJson, [])),
-      additions: findManyBy('ADDITIONS', 'dishId', row.id).filter(function(addition) { return toBool(addition.available); }).map(additionToFrontend),
-      sauces: findManyBy('SAUCES', 'dishId', row.id).filter(function(sauce) { return toBool(sauce.available); }).map(sauceToFrontend),
-      sauceSelectionRequired: toBool(row.sauceSelectionRequired),
-      minimumSauces: toNumber(row.minimumSauces),
-      maximumSauces: toNumber(row.maximumSauces),
-      allergens: parseJson(row.allergensJson, []),
-      available: row.status === 'active',
-      tag: parseJson(row.featuresJson, [])[0],
-      features: parseJson(row.featuresJson, []),
-      servingSizes: parseJson(row.servingSizesJson, []),
-      servingDescription: row.servingDescription,
-      spicyLevel: toNumber(row.spicyLevel),
-      isVegan: toBool(row.isVegan),
-      isVegetarian: toBool(row.isVegetarian),
-      isGlutenFree: toBool(row.isGlutenFree),
-      dietaryNotes: row.dietaryNotes,
-      crossContaminationWarning: row.crossContaminationWarning,
-      likesCount: toNumber(row.likesCount),
+    image: row.mainImageUrl || row.videoThumbnailUrl,
+    video: row.videoUrl || undefined,
+    ingredients: ingredients,
+    removableIngredients: parseJson(row.removableIngredientsJson, ingredients),
+    additions: safeFindManyBy('ADDITIONS', 'dishId', row.id).filter(function(addition) { return toBool(addition.available); }).map(additionToFrontend),
+    sauces: safeFindManyBy('SAUCES', 'dishId', row.id).filter(function(sauce) { return toBool(sauce.available); }).map(sauceToFrontend),
+    sauceSelectionRequired: toBool(row.sauceSelectionRequired),
+    minimumSauces: toNumber(row.minimumSauces),
+    maximumSauces: toNumber(row.maximumSauces),
+    allergens: parseJson(row.allergensJson, []),
+    available: row.status === 'active',
+    tag: parseJson(row.featuresJson, [])[0],
+    features: parseJson(row.featuresJson, []),
+    servingSizes: parseJson(row.servingSizesJson, []),
+    servingDescription: row.servingDescription,
+    spicyLevel: toNumber(row.spicyLevel),
+    isVegan: toBool(row.isVegan),
+    isVegetarian: toBool(row.isVegetarian),
+    isGlutenFree: toBool(row.isGlutenFree),
+    dietaryNotes: row.dietaryNotes,
+    crossContaminationWarning: row.crossContaminationWarning,
+    likesCount: toNumber(row.likesCount),
     viewsCount: toNumber(row.viewsCount),
     commentsCount: toNumber(row.commentsCount),
     sharesCount: toNumber(row.sharesCount),
-    addedToOrderCount: toNumber(row.addedToOrderCount)
+    addedToOrderCount: toNumber(row.addedToOrderCount),
+    sortOrder: toNumber(row.sortOrder)
   };
 }
 
@@ -230,11 +269,11 @@ function dishBadgeMetadataToFrontend(row) {
 function dishToAdmin(row) {
   var dish = dishToPublic(row);
   return Object.assign({}, row, {
-    gallery: findManyBy('DISH_MEDIA', 'dishId', row.id).filter(function(item) { return item.type === 'image'; }).map(function(item) {
+    gallery: safeFindManyBy('DISH_MEDIA', 'dishId', row.id).filter(function(item) { return item.type === 'image'; }).map(function(item) {
       return { id: item.id, url: item.fileUrl, type: item.type, name: item.fileName };
     }),
-    sauces: findManyBy('SAUCES', 'dishId', row.id).map(sauceToFrontend),
-    additions: findManyBy('ADDITIONS', 'dishId', row.id).map(additionToFrontend),
+    sauces: safeFindManyBy('SAUCES', 'dishId', row.id).map(sauceToFrontend),
+    additions: safeFindManyBy('ADDITIONS', 'dishId', row.id).map(additionToFrontend),
     servingSizes: parseJson(row.servingSizesJson, []),
     features: parseJson(row.featuresJson, []),
     ingredients: parseJson(row.ingredientsJson, []),
@@ -262,6 +301,14 @@ function dishToAdmin(row) {
 
 function categoryToFrontend(row) {
   return Object.assign({}, row, { active: toBool(row.active), sortOrder: toNumber(row.sortOrder) });
+}
+
+function safeFindManyBy(name, column, value) {
+  try {
+    return findManyBy(name, column, value);
+  } catch (error) {
+    return [];
+  }
 }
 
 function saveSaucesForDish(dishId, sauces, restaurantId) {

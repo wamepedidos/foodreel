@@ -6,8 +6,34 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Dish } from './types';
 import { MENU_PAGE_SIZE, dishCommentsCountChangedEvent, getMenu } from './services/dishesService';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
+import { compareMenuDishes } from './utils/menuOrdering';
 
 let cachedMenuState: { dishes: Dish[]; hasMore: boolean; nextOffset: number } | null = null;
+
+function mergeSortedDishes(current: Dish[], incoming: Dish[]) {
+  const seenIds = new Set(current.map((dish) => dish.id));
+  return [...current, ...incoming.filter((dish) => !seenIds.has(dish.id))].sort(compareMenuDishes);
+}
+
+async function loadRemainingMenuPages(startOffset: number, initialDishes: Dish[]) {
+  let dishes = initialDishes;
+  let nextOffset = startOffset;
+  let hasMore = true;
+
+  while (hasMore) {
+    const menu = await getMenu({ limit: MENU_PAGE_SIZE, offset: nextOffset });
+    dishes = mergeSortedDishes(dishes, menu.dishes);
+    hasMore = Boolean(menu.pagination?.hasMore);
+
+    const nextPageOffset = menu.pagination?.nextOffset ?? dishes.length;
+    if (nextPageOffset <= nextOffset) {
+      break;
+    }
+    nextOffset = nextPageOffset;
+  }
+
+  return { dishes, hasMore, nextOffset };
+}
 
 export default function App() {
   const [dishes, setDishes] = useState<Dish[]>(() => cachedMenuState?.dishes ?? []);
@@ -22,17 +48,30 @@ export default function App() {
     void getMenu({ limit: MENU_PAGE_SIZE, offset: 0 })
       .then((menu) => {
         if (mounted) {
+          const sortedDishes = [...menu.dishes].sort(compareMenuDishes);
           const nextState = {
-            dishes: menu.dishes,
+            dishes: sortedDishes,
             hasMore: Boolean(menu.pagination?.hasMore),
             nextOffset: menu.pagination?.nextOffset ?? menu.dishes.length
           };
           cachedMenuState = nextState;
-          setDishes(menu.dishes);
+          setDishes(sortedDishes);
           setHasMore(nextState.hasMore);
           setNextOffset(nextState.nextOffset);
           setError('');
           setInitialMenuLoading(false);
+
+          if (nextState.hasMore) {
+            void loadRemainingMenuPages(nextState.nextOffset, nextState.dishes)
+              .then((fullState) => {
+                if (!mounted || fullState.dishes.length === nextState.dishes.length) return;
+                cachedMenuState = fullState;
+                setDishes(fullState.dishes);
+                setHasMore(fullState.hasMore);
+                setNextOffset(fullState.nextOffset);
+              })
+              .catch(() => undefined);
+          }
         }
       })
       .catch((caughtError) => {
@@ -52,9 +91,7 @@ export default function App() {
     setLoadingMore(true);
     try {
       const menu = await getMenu({ limit: MENU_PAGE_SIZE, offset: nextOffset });
-      const seenIds = new Set(dishes.map((dish) => dish.id));
-      const newDishes = menu.dishes.filter((dish) => !seenIds.has(dish.id));
-      const mergedDishes = [...dishes, ...newDishes];
+      const mergedDishes = mergeSortedDishes(dishes, menu.dishes);
       const nextState = {
         dishes: mergedDishes,
         hasMore: Boolean(menu.pagination?.hasMore),

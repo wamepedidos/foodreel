@@ -2,6 +2,7 @@ import type { AdminDish, DashboardStats, DishMediaItem, DishStatus } from '../ad
 import { restaurantConfig } from '../config/restaurant';
 import { dishes as demoDishes } from '../data/dishes';
 import type { Dish } from '../types';
+import { compareMenuDishes } from '../utils/menuOrdering';
 import type {
   AdminDishesResult,
   CategoryRecord,
@@ -22,19 +23,17 @@ let dishesCache: AdminDish[] = [];
 let menuCache: { data: MenuResult; expiresAt: number; limit: number; offset: number } | null = null;
 let dashboardCache: DashboardMetricsResult | null = null;
 export const dishCommentsCountChangedEvent = 'foodreel:dish-comments-count';
-export const MENU_PAGE_SIZE = 10;
+export const MENU_PAGE_SIZE = 50;
 
-const categoryFallbacks: Record<string, string> = {
-  Parrilla: 'Plato fuerte',
-  'Street food': 'Entrada',
-  Entradas: 'Entrada',
-  Especiales: 'Plato fuerte',
-  Pizzas: 'Plato fuerte',
-  Tacos: 'Plato fuerte',
-  Pollo: 'Plato fuerte',
-  Pastas: 'Plato fuerte',
-  Postres: 'Postre',
-  Sandwiches: 'Plato fuerte'
+const seedCategoryAliases: Record<string, string> = {
+  bebida: 'Bebida',
+  bebidas: 'Bebida',
+  entrada: 'Entrada',
+  entradas: 'Entrada',
+  postre: 'Postre',
+  postres: 'Postre',
+  'plato fuerte': 'Plato fuerte',
+  'platos fuertes': 'Plato fuerte'
 };
 
 function now() {
@@ -45,9 +44,13 @@ function createId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function getSeedCategory(category: string) {
+  return seedCategoryAliases[category.trim().toLowerCase()] ?? 'Plato fuerte';
+}
+
 function toSeedDish(index: number): AdminDish {
   const dish = demoDishes[index];
-  const categoryId = categoryFallbacks[dish.category] ?? dish.category;
+  const categoryId = getSeedCategory(dish.category);
 
   return {
     id: dish.id,
@@ -156,6 +159,7 @@ export function adminDishToDish(dish: AdminDish): Dish {
     price: dish.price,
     sharesCount: dish.sharesCount,
     shortDescription: dish.shortDescription,
+    sortOrder: dish.sortOrder,
     servingDescription: dish.servingDescription,
     servingSizes,
     spicyLevel: normalizeSpicyLevel(dish.spicyLevel),
@@ -170,7 +174,7 @@ export function getSeedDishes(): AdminDish[] {
 }
 
 export function getDishesSnapshot() {
-  return dishesCache.length ? dishesCache : getSeedDishes();
+  return dishesCache;
 }
 
 export async function getMenu(options: { forceRefresh?: boolean; limit?: number; offset?: number } = {}) {
@@ -189,7 +193,7 @@ export async function getMenu(options: { forceRefresh?: boolean; limit?: number;
 
   const badgeMetadata = await getDishBadgeMetadata(data.dishes);
   const dishesWithCommentCounts = await hydrateDishCommentCounts(data.dishes.map((dish) => enrichPublicDish(dish, badgeMetadata.get(dish.id))));
-  const enrichedData = { ...data, dishes: dishesWithCommentCounts };
+  const enrichedData = { ...data, dishes: [...dishesWithCommentCounts].sort(compareMenuDishes) };
 
   if (offset === 0) {
     menuCache = { data: enrichedData, expiresAt: Date.now() + 60_000, limit, offset };
@@ -621,7 +625,7 @@ function dishToAdminDish(dish: Dish): AdminDish {
     sharesCount: dish.sharesCount ?? 0,
     shortDescription: dish.shortDescription,
     soldCount: 0,
-    sortOrder: 0,
+    sortOrder: dish.sortOrder ?? 0,
     spicyLevel: dish.spicyLevel ?? 0,
     status: dish.available ? 'active' : 'unavailable',
     title: dish.name,

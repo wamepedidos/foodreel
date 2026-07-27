@@ -29,6 +29,7 @@ export type Dish = {
   commentsCount: number;
   sharesCount?: number;
   addedToOrderCount?: number;
+  sortOrder?: number;
 };
 
 export type DishAddition = {

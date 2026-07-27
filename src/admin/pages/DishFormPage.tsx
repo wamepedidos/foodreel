@@ -24,7 +24,7 @@ import { restaurantConfig } from '../../config/restaurant';
 import { useToast } from '../../components/Toast';
 import { formatCurrency } from '../../utils/format';
 
-const categories = ['Bebida', 'Entrada', 'Plato fuerte', 'Postre'];
+const categories = ['Entrada', 'Plato fuerte', 'Bebida', 'Postre'];
 const servingOptions = [
   { label: '1 persona', value: 1 },
   { label: '2 personas', value: 2 },

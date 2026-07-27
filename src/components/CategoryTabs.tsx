@@ -1,15 +1,15 @@
 import { useMenuStore } from '../store/useMenuStore';
+import { formatMenuCategoryLabel, normalizeMenuCategory } from '../utils/menuOrdering';
 
-const categories = ['Todos', 'Hamburguesas', 'Pastas', 'Entradas', 'Bebidas', 'Postres'];
-
-export function CategoryTabs() {
+export function CategoryTabs({ categories }: { categories: string[] }) {
   const selectedCategory = useMenuStore((state) => state.selectedCategory);
   const setSelectedCategory = useMenuStore((state) => state.setSelectedCategory);
+  const items = ['Todos', ...categories];
 
   return (
     <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-      {categories.map((category) => {
-        const active = selectedCategory === category;
+      {items.map((category) => {
+        const active = category === 'Todos' ? selectedCategory === 'Todos' : normalizeMenuCategory(selectedCategory) === normalizeMenuCategory(category);
         return (
           <button
             aria-pressed={active}
@@ -22,7 +22,7 @@ export function CategoryTabs() {
             onClick={() => setSelectedCategory(category)}
             type="button"
           >
-            {category}
+            {category === 'Todos' ? category : formatMenuCategoryLabel(category)}
           </button>
         );
       })}

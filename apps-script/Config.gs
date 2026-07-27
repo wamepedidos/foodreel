@@ -48,7 +48,8 @@ var BASE_CONFIG_ROWS = [
   ['publicMenuEnabled', 'true', 'Disponibilidad publica del menu']
 ];
 
-var INITIAL_CATEGORIES = ['Bebida', 'Entrada', 'Plato fuerte', 'Postre'];
+var MENU_CATEGORY_ORDER = ['Entrada', 'Plato fuerte', 'Bebida', 'Postre'];
+var INITIAL_CATEGORIES = MENU_CATEGORY_ORDER;
 
 var ORDER_STATUSES = ['new', 'received', 'confirmed', 'preparing', 'ready', 'delivered', 'account_requested', 'paid', 'cancelled'];
 var EMPLOYEE_ROLES = ['admin', 'waiter', 'kitchen'];

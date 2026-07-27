@@ -2,6 +2,7 @@ import { Grid2X2 } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Dish } from '../types';
 import { useMenuStore } from '../store/useMenuStore';
+import { formatMenuCategoryLabel, getOrderedMenuCategories, normalizeMenuCategory } from '../utils/menuOrdering';
 import { hasVideoPreloaded, markVideoPreloaded } from '../utils/reelVideoCache';
 import { ReelDishCard } from './ReelDishCard';
 import { WaiterCallButton } from './WaiterCallButton';
@@ -22,7 +23,7 @@ export function ReelMenu({
   const selectedCategory = useMenuStore((state) => state.selectedCategory);
   const setSelectedCategory = useMenuStore((state) => state.setSelectedCategory);
   const setViewMode = useMenuStore((state) => state.setViewMode);
-  const categories = useMemo(() => ['Todos', ...Array.from(new Set(dishes.map((dish) => dish.category).filter(Boolean)))], [dishes]);
+  const categories = useMemo(() => ['Todos', ...getOrderedMenuCategories(dishes)], [dishes]);
   const [activeDishId, setActiveDishId] = useState<string | undefined>(storedActiveDishId ?? dishes[0]?.id);
   const [muted, setMuted] = useState(true);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -51,7 +52,7 @@ export function ReelMenu({
   }, [activeDishId, storedActiveDishId]);
 
   useEffect(() => {
-    if (selectedCategory === 'Todos' || categories.includes(selectedCategory)) {
+    if (selectedCategory === 'Todos' || categories.some((category) => normalizeMenuCategory(category) === normalizeMenuCategory(selectedCategory))) {
       return;
     }
     setSelectedCategory('Todos');
@@ -73,7 +74,7 @@ export function ReelMenu({
 
   const selectCategory = (category: string) => {
     setSelectedCategory(category);
-    const targetDish = category === 'Todos' ? dishes[0] : dishes.find((dish) => dish.category === category);
+    const targetDish = category === 'Todos' ? dishes[0] : dishes.find((dish) => normalizeMenuCategory(dish.category) === normalizeMenuCategory(category));
     if (!targetDish || !containerRef.current) return;
 
     const target = containerRef.current.querySelector<HTMLElement>(`[data-dish-id="${targetDish.id}"]`);
@@ -81,7 +82,20 @@ export function ReelMenu({
 
     setActiveDishId(targetDish.id);
     setStoredActiveDishId(targetDish.id);
-    containerRef.current.scrollTo({ behavior: 'smooth', top: target.offsetTop });
+    const currentTop = containerRef.current.scrollTop;
+    const targetTop = target.offsetTop;
+    const viewportHeight = containerRef.current.clientHeight;
+    const distance = Math.abs(targetTop - currentTop);
+
+    if (distance > viewportHeight * 1.5) {
+      containerRef.current.scrollTo({ top: Math.max(0, targetTop - viewportHeight) });
+      window.requestAnimationFrame(() => {
+        containerRef.current?.scrollTo({ behavior: 'smooth', top: targetTop });
+      });
+      return;
+    }
+
+    containerRef.current.scrollTo({ behavior: 'smooth', top: targetTop });
   };
 
   useEffect(() => {
@@ -102,7 +116,7 @@ export function ReelMenu({
             setStoredActiveDishId(nextDishId);
             const activeDish = dishes.find((dish) => dish.id === nextDishId);
             if (activeDish?.category) {
-              setSelectedCategory(activeDish.category);
+              setSelectedCategory(normalizeMenuCategory(activeDish.category));
             }
           }
         }
@@ -171,7 +185,7 @@ function ReelCategoryBar({
       <div className="flex h-8 items-center gap-3 border-b border-paper/28">
         <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-4 overflow-x-auto">
           {categories.map((category) => {
-            const active = selectedCategory === category;
+            const active = category === 'Todos' ? selectedCategory === 'Todos' : normalizeMenuCategory(selectedCategory) === normalizeMenuCategory(category);
             return (
               <button
                 aria-pressed={active}
@@ -204,8 +218,7 @@ function ReelCategoryBar({
 }
 
 function formatCategoryLabel(category: string) {
-  if (category === 'Plato fuerte') return 'Platos fuertes';
-  return category;
+  return formatMenuCategoryLabel(category);
 }
 
 function NextVideoPreloader({ dish }: { dish?: Dish }) {
