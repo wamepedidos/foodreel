@@ -41,21 +41,25 @@ type MomentPost = {
 
 const filters = ['Todos', 'Populares', 'Recientes', 'Siguiendo'];
 
+function publicAsset(path: string) {
+  return `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+}
+
 const posts: MomentPost[] = [
   {
     author: 'SofiFoodie',
-    avatar: '/mockups/momentos-avatar-sofi.jpg',
+    avatar: publicAsset('momentos/avatar-sofi.jpg'),
     verified: true,
     time: 'Hace 2 horas',
-    title: 'Submarino Gigante',
-    subtitle: 'Especialidad de la casa',
-    image: '/mockups/momentos-submarino.jpg',
-    fallbackImage: '/mockups/momentos-tacos-1.jpg',
+    title: 'Burger entre amigos',
+    subtitle: 'Momento en mesa',
+    image: publicAsset('momentos/post-personas-burger.jpg'),
+    fallbackImage: publicAsset('momentos/post-burger.png'),
     carousel: '1/3',
-    caption: 'Simplemente espectacular! El mejor submarino que he probado. La carne es jugosa y el pan queda perfecto.',
+    caption: 'Llegaron las burgers y la mesa se puso feliz. Papas, bebidas frias y buena compania.',
     badges: [
-      { icon: Flame, label: 'Picante alto', tone: 'accent' },
-      { icon: UsersRound, label: 'Para 4 personas', tone: 'amber' }
+      { icon: ChefHat, label: 'Recomendado', tone: 'accent' },
+      { icon: UsersRound, label: 'Mesa de 2', tone: 'amber' }
     ],
     likes: '156',
     comments: '23',
@@ -63,17 +67,17 @@ const posts: MomentPost[] = [
   },
   {
     author: 'CarlosViajero',
-    avatar: '/mockups/momentos-avatar-carlos.jpg',
+    avatar: publicAsset('momentos/avatar-carlos.jpg'),
     time: 'Hace 5 horas',
-    title: 'Volcan de Chocolate',
-    subtitle: 'Postre que no te puedes perder',
-    image: '/mockups/momentos-volcan.jpg',
-    fallbackImage: '/mockups/momentos-tacos-2.jpg',
+    title: 'Submarino Gigante',
+    subtitle: 'Especialidad de la casa',
+    image: publicAsset('momentos/post-submarino.jpg'),
+    fallbackImage: publicAsset('momentos/post-tacos.png'),
     carousel: '1/2',
-    caption: 'Centro caliente, helado cremoso y una textura brutal. Es el cierre perfecto para compartir.',
+    caption: 'Simplemente espectacular! El mejor submarino que he probado. La carne es jugosa y el pan queda perfecto.',
     badges: [
-      { icon: ChefHat, label: 'Recomendado', tone: 'accent' },
-      { icon: UsersRound, label: 'Para 2 personas', tone: 'amber' }
+      { icon: Flame, label: 'Picante alto', tone: 'accent' },
+      { icon: UsersRound, label: 'Para 4 personas', tone: 'amber' }
     ],
     likes: '98',
     comments: '12',
@@ -81,18 +85,18 @@ const posts: MomentPost[] = [
   },
   {
     author: 'MesaFoodie',
-    avatar: '/mockups/momentos-avatar.jpg',
+    avatar: publicAsset('momentos/avatar-default.jpg'),
     verified: true,
     time: 'Hace 7 horas',
-    title: 'Tacos al Pastor',
-    subtitle: 'Favorito para compartir',
-    image: '/mockups/momentos-unique-tacos.png',
-    fallbackImage: '/mockups/momentos-tacos-1.jpg',
+    title: 'Mesa compartida',
+    subtitle: 'Amigos probando favoritos',
+    image: publicAsset('momentos/post-personas-amigos.jpg'),
+    fallbackImage: publicAsset('momentos/post-tacos.png'),
     carousel: '1/4',
-    caption: 'Tortilla suave, carne bien dorada y ese toque de limon que levanta todo el plato.',
+    caption: 'Pedimos varios platos al centro y fue la mejor decision. Cada quien encontro su favorito.',
     badges: [
-      { icon: Flame, label: 'Picante suave', tone: 'accent' },
-      { icon: UsersRound, label: 'Para 3 personas', tone: 'amber' }
+      { icon: ChefHat, label: 'Para compartir', tone: 'accent' },
+      { icon: UsersRound, label: 'Mesa de 3', tone: 'amber' }
     ],
     likes: '211',
     comments: '34',
@@ -100,14 +104,14 @@ const posts: MomentPost[] = [
   },
   {
     author: 'AnaComeBien',
-    avatar: '/mockups/momentos-avatar-sofi.jpg',
+    avatar: publicAsset('momentos/avatar-sofi.jpg'),
     time: 'Ayer',
-    title: 'Burger Queso Bacon',
-    subtitle: 'Doble carne y mucho queso',
-    image: '/mockups/momentos-unique-burger.png',
-    fallbackImage: '/mockups/momentos-tacos-2.jpg',
+    title: 'Volcan de Chocolate',
+    subtitle: 'Postre que no te puedes perder',
+    image: publicAsset('momentos/post-volcan.jpg'),
+    fallbackImage: publicAsset('momentos/post-crema.png'),
     carousel: '2/3',
-    caption: 'Carne gruesa, queso fundido y bacon crujiente. Esta es de las que toca pedir con papas.',
+    caption: 'Centro caliente, helado cremoso y una textura brutal. Es el cierre perfecto para compartir.',
     badges: [
       { icon: ChefHat, label: 'Recomendado', tone: 'accent' },
       { icon: UsersRound, label: 'Para 2 personas', tone: 'amber' }
@@ -118,18 +122,18 @@ const posts: MomentPost[] = [
   },
   {
     author: 'RutaBurger',
-    avatar: '/mockups/momentos-avatar-carlos.jpg',
+    avatar: publicAsset('momentos/avatar-carlos.jpg'),
     verified: true,
     time: 'Ayer',
-    title: 'Queso Fundido',
-    subtitle: 'Para abrir el apetito',
-    image: '/mockups/momentos-unique-cheese.png',
-    fallbackImage: '/mockups/momentos-submarino.jpg',
+    title: 'Foto antes del primer bocado',
+    subtitle: 'El ritual FoodReel',
+    image: publicAsset('momentos/post-personas-foto.jpg'),
+    fallbackImage: publicAsset('momentos/post-burger.png'),
     carousel: '3/5',
-    caption: 'El queso viene caliente y elastico, perfecto para compartir antes del plato fuerte.',
+    caption: 'Ese momento antes de probarla: foto rapida, papas calientes y todos esperando el primer mordisco.',
     badges: [
-      { icon: Flame, label: 'Picante alto', tone: 'accent' },
-      { icon: UsersRound, label: 'Para 4 personas', tone: 'amber' }
+      { icon: ChefHat, label: 'Momento social', tone: 'accent' },
+      { icon: UsersRound, label: 'Mesa de amigos', tone: 'amber' }
     ],
     likes: '302',
     comments: '41',
@@ -137,17 +141,17 @@ const posts: MomentPost[] = [
   },
   {
     author: 'DulceFinal',
-    avatar: '/mockups/momentos-avatar.jpg',
+    avatar: publicAsset('momentos/avatar-default.jpg'),
     time: 'Hace 2 dias',
-    title: 'Crema de la Casa',
-    subtitle: 'Suave, fria y cremosa',
-    image: '/mockups/momentos-unique-cream.png',
-    fallbackImage: '/mockups/momentos-volcan.jpg',
+    title: 'Tacos al Pastor',
+    subtitle: 'Favorito para compartir',
+    image: publicAsset('momentos/post-tacos.png'),
+    fallbackImage: publicAsset('momentos/post-submarino.jpg'),
     carousel: '1/2',
-    caption: 'Una cucharada fresca despues de la burger cae perfecto. Textura suave y sabor balanceado.',
+    caption: 'Tortilla suave, carne bien dorada y ese toque de limon que levanta todo el plato.',
     badges: [
-      { icon: ChefHat, label: 'Postre top', tone: 'accent' },
-      { icon: UsersRound, label: 'Para 2 personas', tone: 'amber' }
+      { icon: Flame, label: 'Picante suave', tone: 'accent' },
+      { icon: UsersRound, label: 'Para 3 personas', tone: 'amber' }
     ],
     likes: '187',
     comments: '29',
@@ -248,7 +252,7 @@ function MomentPostCard({ post }: { post: MomentPost }) {
         <img
           alt=""
           className="size-9 shrink-0 rounded-full object-cover"
-          onError={() => setAvatarSrc('/mockups/momentos-avatar.jpg')}
+          onError={() => setAvatarSrc(publicAsset('momentos/avatar-default.jpg'))}
           src={avatarSrc}
         />
         <div className="min-w-0 flex-1">
@@ -324,7 +328,7 @@ function MomentPostCard({ post }: { post: MomentPost }) {
 
 export function MomentosMockupPage() {
   return (
-    <div className="no-scrollbar h-full overflow-y-auto bg-base pb-[92px]">
+    <div className="momentos-light-theme no-scrollbar h-full overflow-y-auto bg-base pb-[92px]">
       <MomentosHeader />
       <main className="space-y-3 px-4 pb-6 pt-2">
         {posts.map((post) => (

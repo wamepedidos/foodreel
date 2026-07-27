@@ -541,3 +541,28 @@ textarea {
 .delivery-route-map .leaflet-control {
   z-index: 1 !important;
 }
+
+.momentos-light-frame,
+.momentos-light-theme {
+  color-scheme: light;
+  --color-background: #f7f7f6;
+  --color-background-rgb: 247 247 246;
+  --color-background-secondary: #efefed;
+  --color-background-secondary-rgb: 239 239 237;
+  --color-surface: #f1f0ed;
+  --color-surface-rgb: 241 240 237;
+  --color-surface-elevated: #ffffff;
+  --color-surface-elevated-rgb: 255 255 255;
+  --color-surface-hover: #f2f0ec;
+  --color-surface-hover-rgb: 242 240 236;
+  --color-text-primary: #171719;
+  --color-text-primary-rgb: 23 23 25;
+  --color-text-secondary: #5d5d63;
+  --color-text-secondary-rgb: 93 93 99;
+  --color-text-muted: #74747b;
+  --color-text-muted-rgb: 116 116 123;
+  --color-border: rgba(20, 20, 24, 0.1);
+  --color-border-strong: rgba(20, 20, 24, 0.18);
+  background: #f7f7f6 !important;
+  color: #171719 !important;
+}

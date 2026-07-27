@@ -25,13 +25,14 @@ export function AppLayout({
   const momentosRoute = location.pathname === '/comunidad' || mockupRoute;
   const immersiveMenu = orderRoute || experienceRoute || momentosRoute || (location.pathname === '/menu' && viewMode === 'reel');
   const frameClass = 'border-0 md:my-0 md:h-dvh md:rounded-none';
+  const forceLightRoute = orderRoute || momentosRoute;
 
   return (
-    <div className={`min-h-dvh w-full ${orderRoute ? 'bg-[#f7f7f6] text-[#252832]' : 'bg-base text-white'}`}>
+    <div className={`min-h-dvh w-full ${forceLightRoute ? 'bg-[#f7f7f6] text-[#252832]' : 'bg-base text-white'}`}>
       <div
         aria-label={`${restaurant.restaurantName} - Mesa ${restaurant.tableNumber}`}
         className={`relative mx-auto flex h-dvh w-full flex-col overflow-hidden shadow-2xl transition-[max-width] duration-300 ${
-          orderRoute ? 'order-page-frame bg-[#f7f7f6]' : 'bg-base'
+          orderRoute ? 'order-page-frame bg-[#f7f7f6]' : momentosRoute ? 'momentos-light-frame bg-[#f7f7f6]' : 'bg-base'
         } ${frameClass} max-w-[520px]`}
       >
         {hideHeader || immersiveMenu ? null : <RestaurantHeader restaurant={restaurant} />}
