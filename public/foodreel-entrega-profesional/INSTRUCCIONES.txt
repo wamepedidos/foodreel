@@ -1,0 +1,5 @@
+1. Extrae toda la carpeta.
+2. Coloca FoodReel_Promocional.mp4 en la misma carpeta que FoodReel.html.
+3. Abre FoodReel.html en Chrome o Edge.
+4. El video inicia silenciado; pulsa Activar audio.
+5. La última pantalla contiene WhatsApp y el enlace a la demo.

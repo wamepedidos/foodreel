@@ -43,6 +43,7 @@ export default defineConfig({
       workbox: {
         navigateFallback: `${base}index.html`,
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,webmanifest}'],
+        globIgnores: ['foodreel-entrega-profesional/**'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
