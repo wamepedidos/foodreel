@@ -23,7 +23,8 @@ export function AppLayout({
   const experienceRoute = location.pathname.startsWith('/experience');
   const mockupRoute = location.pathname === '/comunidad/mockup';
   const momentosRoute = location.pathname === '/comunidad' || mockupRoute;
-  const immersiveMenu = orderRoute || experienceRoute || momentosRoute || (location.pathname === '/menu' && viewMode === 'reel');
+  const menuRoute = location.pathname === '/demo' || location.pathname === '/menu';
+  const immersiveMenu = orderRoute || experienceRoute || momentosRoute || (menuRoute && viewMode === 'reel');
   const frameClass = 'border-0 md:my-0 md:h-dvh md:rounded-none';
   const forceLightRoute = orderRoute || momentosRoute;
 

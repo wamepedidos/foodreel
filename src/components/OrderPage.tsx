@@ -463,7 +463,7 @@ function OrderPageHeader() {
           <button
             aria-label="Volver al menu"
             className="grid size-10 shrink-0 place-items-center rounded-[16px] border border-[#e9e5e1] bg-white text-[#252832] shadow-[0_14px_36px_rgba(15,23,42,0.08)] transition hover:border-accent/50 hover:text-accent"
-            onClick={() => navigate('/menu')}
+            onClick={() => navigate('/demo')}
             type="button"
           >
             <ArrowLeft className="size-5" />
@@ -1142,7 +1142,7 @@ export function OrderPage() {
               <div className="mt-3 grid gap-2 min-[390px]:grid-cols-[minmax(0,0.95fr)_minmax(0,1.2fr)]">
                 <button
                   className="inline-flex h-12 min-w-0 items-center justify-center gap-2 rounded-2xl border border-dashed border-[#e2ddd8] bg-white px-2 text-xs font-black text-accent transition hover:border-accent/50"
-                  onClick={() => navigate('/menu')}
+                  onClick={() => navigate('/demo')}
                   type="button"
                 >
                   <Plus className="size-4 shrink-0" />
@@ -1165,7 +1165,7 @@ export function OrderPage() {
             </div>
           </section>
         ) : activeOrder ? (
-          <ActiveOrderReceipt order={activeOrder} onCreateAnother={() => navigate('/menu')} />
+          <ActiveOrderReceipt order={activeOrder} onCreateAnother={() => navigate('/demo')} />
         ) : (
           <section className={`grid min-h-[42dvh] place-items-center p-6 text-center ${orderStyles.card}`}>
             <div>
@@ -1174,7 +1174,7 @@ export function OrderPage() {
               </div>
               <h2 className="mt-4 text-lg font-black leading-7 text-[#252832]">Tu pedido esta listo para seguimiento</h2>
               <p className={orderStyles.body}>Agrega productos desde el menu para crear otro pedido.</p>
-              <button className={`mx-auto mt-5 ${orderStyles.primaryButton}`} onClick={() => navigate('/menu')} type="button">
+              <button className={`mx-auto mt-5 ${orderStyles.primaryButton}`} onClick={() => navigate('/demo')} type="button">
                 Ver menu
               </button>
             </div>

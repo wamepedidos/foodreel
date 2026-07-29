@@ -4,11 +4,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 declare const process: { env: Record<string, string | undefined> };
 
-const base = process.env.GITHUB_PAGES === 'true' ? '/foodreel/' : '/';
+const base = '/';
 const presentationRoutePattern =
-  process.env.GITHUB_PAGES === 'true'
-    ? /^\/foodreel\/foodreel-entrega-profesional(?:\/|$)/
-    : /^\/foodreel-entrega-profesional(?:\/|$)/;
+  /^\/presentacion(?:\/|$)/;
 
 export default defineConfig({
   base,
@@ -48,7 +46,7 @@ export default defineConfig({
         navigateFallback: `${base}index.html`,
         navigateFallbackDenylist: [presentationRoutePattern],
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,webmanifest}'],
-        globIgnores: ['foodreel-entrega-profesional/**'],
+        globIgnores: ['presentacion/**'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,

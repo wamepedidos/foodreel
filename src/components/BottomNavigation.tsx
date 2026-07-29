@@ -5,7 +5,7 @@ import { useMenuStore } from '../store/useMenuStore';
 
 const navItems = [
   { label: 'Momentos', icon: Sparkles, path: '/comunidad' },
-  { label: 'Men\u00fa', icon: CirclePlay, path: '/menu' },
+  { label: 'Men\u00fa', icon: CirclePlay, path: '/demo' },
   { label: 'Pedido', icon: ShoppingBag, path: '/pedido' }
 ];
 
@@ -40,8 +40,8 @@ export function BottomNavigation() {
               key={item.label}
               onClick={() => {
                 if (item.path) {
-                  if (item.path === '/menu') {
-                    setViewMode(location.pathname === '/menu' && viewMode === 'reel' ? 'grid' : 'reel');
+                  if (item.path === '/demo') {
+                    setViewMode(location.pathname === '/demo' && viewMode === 'reel' ? 'grid' : 'reel');
                   }
                   navigate(item.path);
                 }

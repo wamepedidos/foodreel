@@ -306,7 +306,7 @@ function MomentPostCard({ post }: { post: MomentPost }) {
           </div>
           <button
             className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-accent/65 bg-accent/10 px-3 text-xs font-semibold text-accent transition hover:bg-accent/15"
-            onClick={() => navigate('/menu')}
+            onClick={() => navigate('/demo')}
             type="button"
           >
             <Utensils className="size-3.5" />

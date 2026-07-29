@@ -37,6 +37,9 @@ jobs:
           GITHUB_PAGES: true
           VITE_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbxUd-hjWkeSzY05mrsxw9XfFIZ4DwEvdXPItI4q9-JQ2ymvktObL0Djlv3BC-oNJd8/exec
 
+      - name: Add SPA fallback
+        run: cp dist/index.html dist/404.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

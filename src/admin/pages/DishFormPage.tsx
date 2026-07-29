@@ -1237,7 +1237,7 @@ export function DishPerformancePanel({ dish }: { dish: AdminDish }) {
       <div className="mt-4 flex flex-wrap gap-2">
         <LinkButton label="Ver comentarios" to="/admin/comments" />
         <LinkButton label="Ver publicaciones relacionadas" to="/admin/publications" />
-        <LinkButton label="Ver como cliente" to="/menu" />
+        <LinkButton label="Ver como cliente" to="/demo" />
       </div>
       <p className="mt-3 text-sm text-white/54">Metricas de solo lectura. No se pueden editar manualmente desde este formulario.</p>
     </FormSection>

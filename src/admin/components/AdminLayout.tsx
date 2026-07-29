@@ -98,7 +98,7 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
           <Link
             className="mb-2 flex h-12 items-center justify-center gap-2 rounded-2xl bg-accent px-3 text-sm font-black text-contrast shadow-glow transition hover:bg-accent/90"
             onClick={onClose}
-            to="/menu"
+            to="/demo"
           >
             <ExternalLink className="size-5 shrink-0" />
             Ir a la carta
@@ -170,7 +170,7 @@ export function AdminHeader({
         <div className="flex shrink-0 items-center gap-2">
           <Link
             className="inline-flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-card px-3 text-sm font-black text-white transition hover:border-accent/50 hover:text-accent"
-            to="/menu"
+            to="/demo"
           >
             <ExternalLink className="size-4" />
             <span>Ver carta</span>

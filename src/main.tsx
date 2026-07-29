@@ -33,8 +33,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
-          <Route path="/" element={<Navigate to="/menu" replace />} />
-          <Route path="/menu" element={<App />} />
+          <Route path="/" element={<Navigate to="/demo" replace />} />
+          <Route path="/demo" element={<App />} />
+          <Route path="/menu" element={<Navigate to="/demo" replace />} />
           <Route path="/pedido" element={<OrderApp />} />
           <Route
             path="/comunidad"
@@ -95,7 +96,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="comments" element={<AdminPlaceholderPage title="Comentarios" />} />
             <Route path="settings" element={<AdminPlaceholderPage title="Configuracion" />} />
           </Route>
-          <Route path="*" element={<Navigate to="/menu" replace />} />
+          <Route path="*" element={<Navigate to="/demo" replace />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
