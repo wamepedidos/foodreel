@@ -1,5 +1,8 @@
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 
+await mkdir('dist/foodinstagram', { recursive: true });
+await cp('dist/index.html', 'dist/foodinstagram/index.html');
+
 await rm('dist/client', { recursive: true, force: true });
 await mkdir('dist/client', { recursive: true });
 
