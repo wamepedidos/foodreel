@@ -7,6 +7,7 @@ import OrderApp from './OrderApp';
 import { CreateExperiencePage } from './components/experience/CreateExperiencePage';
 import { ExperienceDetailPage } from './components/experience/ExperienceDetailPage';
 import { MomentosMockupPage } from './components/experience/MomentosMockupPage';
+import { FoodInstagramPage } from './components/FoodInstagramPage';
 import { StaffPreviewOrdersPage } from './components/StaffPreviewOrdersPage';
 import { AppLayout } from './components/AppLayout';
 import { ToastProvider } from './components/Toast';
@@ -36,6 +37,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<Navigate to="/demo" replace />} />
           <Route path="/demo" element={<App />} />
           <Route path="/menu" element={<Navigate to="/demo" replace />} />
+          <Route path="/foodinstagram" element={<FoodInstagramPage />} />
           <Route path="/pedido" element={<OrderApp />} />
           <Route
             path="/comunidad"
